@@ -16,7 +16,9 @@ import sys
 def main() -> int:
     with open(sys.argv[1], encoding="utf-8") as f:
         pedido = json.load(f)
-    os.environ.setdefault("HF_HOME", pedido["hf_home"])
+    # Atribuicao, nao setdefault: o HF_HOME herdado do ambiente perderia para
+    # o que a configuracao central (vf.toml) mandou.
+    os.environ["HF_HOME"] = pedido["hf_home"]
 
     import torch
     from diffusers import FluxPipeline, StableDiffusion3Pipeline

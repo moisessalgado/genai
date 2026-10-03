@@ -5,13 +5,15 @@ from pathlib import Path
 
 import yaml
 
+from .config import settings
 from .chunk.splitter import split_paragraph
 from .ingest.loader import detectar_capitulos, limpar, ler, paragrafos
 from .text.roles import dividir_por_papel, tem_dialogo
 from .narration.rules import detect_ambiguous, normalize
 from .script.models import Chapter, Rights, Script, Segment, SynthParams
 
-RAIZ = Path(__file__).resolve().parents[2]
+# Alias de compatibilidade: o lugar certo agora e `config.settings()`.
+RAIZ = settings().raiz
 
 # Valores convencionais de `rights.status`. Servem para consulta e para o registro
 # no project.yaml -- NAO sao uma autorizacao: o export nao e bloqueado por eles.
@@ -20,7 +22,7 @@ RIGHTS_CONHECIDOS = {"dominio-publico", "proprio", "licenciado", "teste-local"}
 
 
 def dir_projeto(slug: str, raiz: Path | None = None) -> Path:
-    return (raiz or RAIZ) / "projects" / slug
+    return raiz / "projects" / slug if raiz else settings().projects_dir / slug
 
 
 def criar(slug: str, fonte: Path, narrator: str, raiz: Path | None = None,

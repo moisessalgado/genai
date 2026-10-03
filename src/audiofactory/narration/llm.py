@@ -18,8 +18,10 @@ from urllib import error, request
 
 from num2words import num2words
 
-OLLAMA_URL = "http://localhost:11434/api/generate"
-MODELO_PADRAO = "gemma4:12b"
+from ..config import settings
+
+OLLAMA_URL = settings().llm_url.rstrip("/") + "/api/generate"
+MODELO_PADRAO = settings().llm_modelo
 
 PROMPT = """Você prepara texto para narração em português brasileiro.
 

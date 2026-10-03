@@ -37,7 +37,9 @@ def _salvar_com_soundfile() -> None:
 
 def main() -> int:
     pedido = json.loads(sys.argv[1])
-    os.environ.setdefault("HF_HOME", pedido["hf_home"])
+    # Atribuicao, nao setdefault: o HF_HOME herdado do ambiente perderia para
+    # o que a configuracao central (vf.toml) mandou.
+    os.environ["HF_HOME"] = pedido["hf_home"]
 
     _salvar_com_soundfile()
     from acestep.pipeline_ace_step import ACEStepPipeline

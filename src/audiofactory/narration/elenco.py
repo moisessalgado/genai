@@ -21,8 +21,10 @@ import re
 import unicodedata
 from urllib import error, request
 
-OLLAMA_URL = "http://localhost:11434/api/generate"
-MODELO_PADRAO = "gemma4:12b"
+from ..config import settings
+
+OLLAMA_URL = settings().llm_url.rstrip("/") + "/api/generate"
+MODELO_PADRAO = settings().llm_modelo
 
 INDETERMINADO = "indeterminado"
 

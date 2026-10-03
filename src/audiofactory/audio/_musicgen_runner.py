@@ -15,7 +15,9 @@ import sys
 
 def main() -> int:
     pedido = json.loads(sys.argv[1])
-    os.environ.setdefault("HF_HOME", pedido["hf_home"])
+    # Atribuicao, nao setdefault: o HF_HOME herdado do ambiente perderia para
+    # o que a configuracao central (vf.toml) mandou.
+    os.environ["HF_HOME"] = pedido["hf_home"]
 
     import soundfile as sf
     import torch

@@ -13,6 +13,7 @@ from rich.console import Console
 from rich.table import Table
 
 from .. import project as proj_mod
+from ..config import settings
 from ..engines.chatterbox_engine import ChatterboxEngine
 from ..pipeline import Runner
 from ..qa.verify import Verifier
@@ -33,7 +34,7 @@ def _proj(slug: str) -> Path:
 
 def _lexicon() -> dict[str, str]:
     lex: dict[str, str] = {}
-    for f in sorted((proj_mod.RAIZ / "lexicon").glob("*.yaml")):
+    for f in sorted(settings().lexicon_dir.glob("*.yaml")):
         lex.update(yaml.safe_load(f.read_text(encoding="utf-8")) or {})
     return lex
 
@@ -89,7 +90,7 @@ def lexico_antigo(slug: str,
         proj_mod.ingerir(p)
     from ..narration import ortografia
 
-    destino = saida or (proj_mod.RAIZ / "lexicon" / "pt-BR.ortografia-1943.yaml")
+    destino = saida or (settings().lexicon_dir / "pt-BR.ortografia-1943.yaml")
     existente: dict[str, str] = {}
     if destino.exists():
         existente = yaml.safe_load(destino.read_text(encoding="utf-8")) or {}
@@ -145,7 +146,7 @@ def _etapa_run(p: Path, *, chapters: str | None = None, no_qa: bool = False,
         if vid in ("default", None):
             return None
         try:
-            return carregar(proj_mod.RAIZ, vid).referencia
+            return carregar(settings().raiz, vid).referencia
         except (FileNotFoundError, ValueError) as e:
             console.print(f"[red]voz {vid}:[/] {e}")
             raise typer.Exit(1)
@@ -636,7 +637,7 @@ def _token_upload(token: Path | None) -> Path:
     """Token de UPLOAD (`youtube.upload`) -- diferente do token de canal/branding
     (`_token_canal`, escopo `youtube`). Cada canal do YouTube tem o seu, mesmo
     `client_secret.json` (mesmo app OAuth)."""
-    return token or (proj_mod.RAIZ / "config" / "youtube_token.json")
+    return token or (settings().config_dir / "youtube_token.json")
 
 
 def _etapa_publish(p: Path, cfg: dict, *, arquivo: Path | None = None,
@@ -689,7 +690,7 @@ def _etapa_publish(p: Path, cfg: dict, *, arquivo: Path | None = None,
         console.print("[dim]use --republicar para subir outra cópia[/]")
         return anterior["video_id"]
 
-    segredo = client_secret or (proj_mod.RAIZ / "config" / "youtube_client_secret.json")
+    segredo = client_secret or (settings().config_dir / "youtube_client_secret.json")
     token = _token_upload(token)
     if not segredo.exists():
         console.print(f"[red]client secret ausente:[/] {segredo} — "
@@ -749,13 +750,13 @@ app.add_typer(canal_app, name="canal")
 
 
 def _token_canal(token: Path | None) -> Path:
-    return token or (proj_mod.RAIZ / "config" / "youtube_canal_token.json")
+    return token or (settings().config_dir / "youtube_canal_token.json")
 
 
 def _autenticar_canal(client_secret: Path | None, token: Path | None = None):
     from ..publish.youtube import SCOPES_CANAL, autenticar
 
-    segredo = client_secret or (proj_mod.RAIZ / "config" / "youtube_client_secret.json")
+    segredo = client_secret or (settings().config_dir / "youtube_client_secret.json")
     if not segredo.exists():
         console.print(f"[red]client secret ausente:[/] {segredo} — "
                       "veja docs/youtube-publish.md")
@@ -996,12 +997,12 @@ def _um_sutta(entrada: str, ai, passos: tuple[str, ...], *, narrator: str,
               slides_seg: float, slides_seed: int | None, legenda: bool, gpu: bool,
               refazer: bool) -> None:
     """Um sutta, do endereço ao YouTube. Levanta em qualquer etapa que falhar."""
-    s = ai.buscar(entrada, cache=proj_mod.RAIZ / "cache" / "acessoaoinsight",
+    s = ai.buscar(entrada, cache=settings().cache_dir / "acessoaoinsight",
                   refazer=refazer)
     console.print(f"[green]{s.referencia}[/] · {s.pali} · {len(s.paragrafos)} parágrafos"
                   + (f" · {s.descartados} descartados (aparato)" if s.descartados else ""))
 
-    fonte = proj_mod.RAIZ / "books" / "suttas" / f"{s.slug}.txt"
+    fonte = settings().books_dir / "suttas" / f"{s.slug}.txt"
     fonte.parent.mkdir(parents=True, exist_ok=True)
     fonte.write_text(s.texto(), encoding="utf-8")
 
@@ -1053,7 +1054,7 @@ def _um_sutta(entrada: str, ai, passos: tuple[str, ...], *, narrator: str,
                    miniatura_preset=preset)
 
 
-_ASSETS_CLASSICOS = proj_mod.RAIZ / "assets" / "slides-classicos"
+_ASSETS_CLASSICOS = settings().assets_dir / "slides-classicos"
 
 
 @app.command()
@@ -1177,10 +1178,10 @@ def _um_capitulo(entrada: str, wk, passos: tuple[str, ...], *, narrator: str,
                 gpu: bool, refazer: bool, token: Path | None,
                 client_secret: Path | None) -> None:
     """Um capítulo, da URL ao YouTube. Levanta em qualquer etapa que falhar."""
-    c = wk.buscar(entrada, cache=proj_mod.RAIZ / "cache" / "wikisource", refazer=refazer)
+    c = wk.buscar(entrada, cache=settings().cache_dir / "wikisource", refazer=refazer)
     console.print(f"[green]{c.titulo_video}[/] · {len(c.paragrafos)} parágrafos")
 
-    fonte = proj_mod.RAIZ / "books" / "wikisource" / f"{c.slug}.txt"
+    fonte = settings().books_dir / "wikisource" / f"{c.slug}.txt"
     fonte.parent.mkdir(parents=True, exist_ok=True)
     fonte.write_text(c.texto(), encoding="utf-8")
 
@@ -1512,7 +1513,7 @@ def voice_new(voice_id: str, reference: Path = typer.Option(..., "--reference"),
     from ..voices import criar, modelo_consentimento
 
     try:
-        v = criar(proj_mod.RAIZ, voice_id, reference.resolve(),
+        v = criar(settings().raiz, voice_id, reference.resolve(),
                   consentimento=modelo_consentimento(voice_id, quem), forcar=forcar)
     except ValueError as e:
         console.print(f"[red]recusado:[/] {e}")
@@ -1560,10 +1561,10 @@ def voice_template(voice_id: str = typer.Argument(..., help="id a registrar, ex.
         audio = np.concatenate([g.audio.numpy() for g in pipe(TEXTO_CALIBRACAO,
                                                              voice=kokoro_voice,
                                                              speed=velocidade)])
-    tmp = proj_mod.RAIZ / "cache" / f"ref-{voice_id}.wav"
+    tmp = settings().cache_dir / f"ref-{voice_id}.wav"
     tmp.parent.mkdir(parents=True, exist_ok=True)
     sf.write(str(tmp), audio, 24000)
-    v = criar(proj_mod.RAIZ, voice_id, tmp,
+    v = criar(settings().raiz, voice_id, tmp,
               template_de=f"Kokoro-82M (Apache-2.0), voz {kokoro_voice}"
                           + (f", velocidade {velocidade:g}" if velocidade != 1.0 else ""))
     console.print(f"[green]voz template registrada[/] {v.dir}")
@@ -1574,9 +1575,9 @@ def voice_template(voice_id: str = typer.Argument(..., help="id a registrar, ex.
 @voice_app.command("list")
 def voice_list():
     """Lista as vozes registradas."""
-    from ..voices import listar
+    from ..voices import listar, raiz_vozes
 
-    vozes = listar(proj_mod.RAIZ)
+    vozes = listar(settings().raiz)
     if not vozes:
         console.print("nenhuma voz registrada — use [bold]voice record[/] para começar")
         return
@@ -1584,7 +1585,7 @@ def voice_list():
 
     for v in vozes:
         cfg = _yaml.safe_load(
-            (proj_mod.RAIZ / "voices" / v / "profile.yaml").read_text(encoding="utf-8"))
+            (raiz_vozes(settings().raiz) / v / "profile.yaml").read_text(encoding="utf-8"))
         tipo = cfg.get("tipo", "pessoa")
         origem = f" — {cfg['origem']}" if cfg.get("origem") else ""
         console.print(f"  [bold]{v}[/] ({tipo}){origem}")
@@ -1597,7 +1598,7 @@ def voice_test(voice_id: str, ptbr_pack: bool = True):
 
     from ..voices import TEXTO_CALIBRACAO, carregar
 
-    v = carregar(proj_mod.RAIZ, voice_id)
+    v = carregar(settings().raiz, voice_id)
     engine = ChatterboxEngine(v.params, use_ptbr_pack=ptbr_pack)
     with console.status("carregando modelo…"):
         engine.load()
@@ -1626,7 +1627,7 @@ def doctor():
         except Exception as e:
             console.print(f"kernels na GPU {ok(False)} — {e}")
     console.print(f"ffmpeg {ok(shutil.which('ffmpeg'))} · ffprobe {ok(shutil.which('ffprobe'))}")
-    lic = proj_mod.RAIZ / "LICENSES.md"
+    lic = settings().raiz / "LICENSES.md"
     console.print(f"registro de licenças {ok(lic.exists())} — {lic}")
 
 

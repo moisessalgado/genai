@@ -27,10 +27,10 @@ def _lexicon_do_projeto() -> dict[str, str]:
     """Mesmos arquivos de lexico que o `script` usou para respelar."""
     import yaml
 
-    from .project import RAIZ
+    from .config import settings
 
     lex: dict[str, str] = {}
-    for f in sorted((RAIZ / "lexicon").glob("*.yaml")):
+    for f in sorted(settings().lexicon_dir.glob("*.yaml")):
         lex.update(yaml.safe_load(f.read_text(encoding="utf-8")) or {})
     return lex
 

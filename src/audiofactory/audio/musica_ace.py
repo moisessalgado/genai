@@ -22,11 +22,11 @@ from pathlib import Path
 
 import numpy as np
 
-from ..project import RAIZ
+from ..config import settings
 from .musica import SAMPLE_RATE, _ffmpeg
 
-VENV = RAIZ / ".venv-musica"
-CHECKPOINT = RAIZ / "models" / "ace-step"
+VENV = settings().venv_musica
+CHECKPOINT = settings().ace_checkpoint
 
 # Duas pastas, e a divisao entre elas nao e organizacao: e o que pode ser
 # apagado sem consequencia.
@@ -40,8 +40,8 @@ CHECKPOINT = RAIZ / "models" / "ace-step"
 # soam com ela, e apagar significa que um capitulo remontado amanha nao combina
 # mais com os irmaos que foram ao ar. O determinismo da seed protege contra
 # gerar diferente, nao contra perder o arquivo.
-ACERVO = RAIZ / "assets" / "musica"
-CACHE = RAIZ / "cache" / "musica"
+ACERVO = settings().assets_dir / "musica"
+CACHE = settings().cache_dir / "musica"
 
 # Duracao de cada peca gerada. O ACE-Step aguenta ~4 min, mas peca longa nao
 # compra nada aqui: o que combate a monotonia e a VARIEDADE entre pecas, e duas
@@ -253,7 +253,7 @@ def gerar_pecas(paleta: str = "contemplativo", n: int = N_PECAS,
 def _rodar(pecas: list[dict], peca_s: float) -> None:
     pedido = {"pecas": pecas, "duracao_s": peca_s, "passos": PASSOS,
               "guidance": GUIDANCE, "checkpoint": str(CHECKPOINT),
-              "hf_home": str(RAIZ / "models")}
+              "hf_home": str(settings().hf_home)}
     runner = Path(__file__).with_name("_ace_runner.py")
     r = subprocess.run([str(VENV / "bin" / "python"), str(runner), json.dumps(pedido)],
                        capture_output=True, text=True)

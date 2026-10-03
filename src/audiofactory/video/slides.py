@@ -18,8 +18,9 @@ from __future__ import annotations
 import random
 from pathlib import Path
 
-# assets/slides na raiz do repo: video/ -> audiofactory/ -> src/ -> raiz.
-DIRETORIO_PADRAO = Path(__file__).resolve().parents[3] / "assets" / "slides"
+from ..config import settings
+
+DIRETORIO_PADRAO = settings().assets_dir / "slides"
 
 EXTENSOES = (".jpg", ".jpeg", ".png", ".webp")
 

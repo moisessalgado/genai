@@ -22,16 +22,16 @@ import subprocess
 import tempfile
 from pathlib import Path
 
-from ..project import RAIZ
+from ..config import settings
 from .slides import DIRETORIO_PADRAO
 
-VENV = RAIZ / ".venv-imagem"
+VENV = settings().venv_imagem
 
 # Mesma divisão de `assets/musica` vs `cache/musica`: o que pode ser apagado
 # sem consequência (rascunho, custa só GPU) de um lado, o acervo do canal do
 # outro. `ACERVO` é `assets/slides/`, que já existe — a arte gerada localmente
 # entra no mesmo lugar que a do Midjourney.
-CACHE = RAIZ / "cache" / "imagens"
+CACHE = settings().cache_dir / "imagens"
 ACERVO = DIRETORIO_PADRAO
 
 # "flux" e "sd" (SD3.5-Medium, cabe em 16 GB sem offload) cobrem o uso comum;
@@ -144,7 +144,7 @@ def _rodar(pedidos: list[dict], modelo_repo: str, familia: str,
     fotorrealistas demais (`imagem_qa.eh_fotorealista`). Devolve
     `(notas_relevancia, notas_estilo)`, cada uma vazia se nao pedida."""
     pedido = {"pedidos": pedidos, "modelo_repo": modelo_repo, "familia": familia,
-              "hf_home": str(RAIZ / "models"), "avaliar_clip": avaliar_clip,
+              "hf_home": str(settings().hf_home), "avaliar_clip": avaliar_clip,
               "avaliar_estilo": avaliar_estilo}
     runner = Path(__file__).with_name("_imagem_runner.py")
     with tempfile.NamedTemporaryFile("w", suffix=".json", delete=False,
