@@ -1612,7 +1612,7 @@ def voice_test(voice_id: str, ptbr_pack: bool = True):
 
 @app.command()
 def doctor():
-    """Verifica GPU, torch, FFmpeg e licenças dos pesos."""
+    """Verifica GPU, torch, FFmpeg, licenças dos pesos e a configuração resolvida."""
     import shutil
     import torch
 
@@ -1629,6 +1629,36 @@ def doctor():
     console.print(f"ffmpeg {ok(shutil.which('ffmpeg'))} · ffprobe {ok(shutil.which('ffprobe'))}")
     lic = settings().raiz / "LICENSES.md"
     console.print(f"registro de licenças {ok(lic.exists())} — {lic}")
+    _mostrar_config()
+
+
+def _mostrar_config() -> None:
+    """Valor final de cada campo do Settings e de onde ele veio."""
+    from dataclasses import fields
+    from urllib import request
+
+    s = settings()
+    t = Table(title="configuração (vf.toml / VF_*)")
+    for c in ("campo", "valor", "origem", ""):
+        t.add_column(c)
+    for f in fields(s):
+        if f.name == "origem":
+            continue
+        v = getattr(s, f.name)
+        if isinstance(v, Path):
+            estado = "[green]existe[/]" if v.exists() else "[yellow]ausente[/]"
+        else:
+            estado = ""
+            if f.name.endswith("_url"):
+                try:
+                    request.urlopen(v, timeout=2).close()
+                    estado = "[green]responde[/]"
+                except Exception as e:
+                    # 404 na raiz ainda prova que o serviço está no ar
+                    estado = ("[green]responde[/]" if getattr(e, "code", None)
+                              else "[yellow]fora do ar[/]")
+        t.add_row(f.name, str(v), s.origem.get(f.name, ""), estado)
+    console.print(t)
 
 
 def _liberar_ollama() -> None:

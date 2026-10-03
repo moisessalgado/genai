@@ -267,7 +267,7 @@
    }
   },
   "doctor": {
-   "ajuda": "Verifica GPU, torch, FFmpeg e licenças dos pesos.",
+   "ajuda": "Verifica GPU, torch, FFmpeg, licenças dos pesos e a configuração resolvida.",
    "parametros": []
   },
   "export": {
