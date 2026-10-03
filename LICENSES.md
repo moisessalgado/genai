@@ -22,8 +22,8 @@ Reconferir o model card a cada atualização de versão — licença de peso pod
 | `ACE-Step/ACE-Step-v1-3.5B` | Apache-2.0 | ✅ Sim | model card HF (`license: apache-2.0`) + `LICENSE` do repo, 2026-08-30 |
 | `facebook/musicgen-stereo-large` (Meta AudioCraft) | CC-BY-NC-4.0 | ❌ Não, mas **aceito aqui** — ver ressalva abaixo | model card HF (`license: cc-by-nc-4.0`), 2026-09-01 |
 
-Roda na venv isolada `.venv-musica` (ACE-Step) ou `.venv-musica-mg` (MusicGen), nunca no processo
-do pipeline — ver `audio/_ace_runner.py` e `audio/_musicgen_runner.py`. Venvs separadas entre si
+Roda na venv isolada `~/ai/envs/musica-ace` (ACE-Step) ou `~/ai/envs/musica-musicgen` (MusicGen), nunca no processo
+do pipeline — ver `video/_ace_runner.py` e `video/_musicgen_runner.py`. Venvs separadas entre si
 também: nenhuma razão para as duas dependerem da mesma fixação de `transformers`/`torch`.
 
 ⚠️ **MusicGen é NC — por que entra mesmo assim.** Esta tabela registrava o MusicGen como excluído
@@ -61,7 +61,7 @@ piano alegre e reconhecível, no lugar da trilha ambiente/contemplativa usada no
 ## Pesos de imagem
 
 Servidos pelo **InvokeAI** da máquina (`~/invokeai`, mantido pelo ai-stack), que o pipeline chama
-por HTTP (`servicos/invokeai.py`). Nenhum peso de imagem roda no processo do pipeline.
+por HTTP (`core/servicos/invokeai.py`). Nenhum peso de imagem roda no processo do pipeline.
 
 | Modelo (nome no InvokeAI) | Origem do arquivo | Licença | Uso comercial | Fonte verificada |
 |---|---|---|---|---|
@@ -119,7 +119,7 @@ Black Forest Labs) fica fora do pipeline por esse motivo, mesmo tendo qualidade 
 |---|---|---|
 | `chatterbox-tts` (código) | MIT | — |
 | `acestep` (código) | Apache-2.0 | Geração da trilha, em venv separada |
-| `transformers` (código, MusicGen) | Apache-2.0 | Geração da trilha, em venv separada (`.venv-musica-mg`) |
+| `transformers` (código, MusicGen) | Apache-2.0 | Geração da trilha, em venv separada (`~/ai/envs/musica-musicgen`) |
 | InvokeAI 6.14 (código) | Apache-2.0 (+ licenças de componentes no repo) | Servidor de geração de imagem, chamado por HTTP — não é importado nem redistribuído. Verificado 2026-10-02 |
 | `diffusers` (código) | Apache-2.0 | Usado até 2026-10-02 na `.venv-imagem`, aposentada em favor do InvokeAI |
 | `transformers` (código, CLIP de QA) | Apache-2.0 | No processo do pipeline, só para o CLIP do `imagem_qa` |

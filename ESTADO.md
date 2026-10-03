@@ -32,7 +32,7 @@ Modelos ficam em `models/` (aponte `HF_HOME` para lá).
   `~/.profile` e `~/.config/environment.d/ai.conf`; `~/.cache/huggingface` aponta para lá
   também). A infra de IA (Ollama/LiteLLM, InvokeAI, pesos, venvs) passa a ser do
   `~/dev/ai-workspace/ai-stack`; este repo fala com os serviços por HTTP.
-- **Caminhos, venvs e URLs saem de `src/audiofactory/config.py`**, não de `RAIZ / "..."`
+- **Caminhos, venvs e URLs saem de `src/genai/core/config.py`**, não de `RAIZ / "..."`
   espalhado. Precedência: padrão no código < `HF_HOME` < `vf.toml` (ou `$VF_CONFIG`) <
   `VF_<CAMPO>`. Os padrões reproduzem o layout de sempre; `vf.example.toml` lista os campos.
   `audio-factory doctor` mostra o valor final de cada campo, de onde veio e se o serviço
@@ -47,7 +47,7 @@ Modelos ficam em `models/` (aponte `HF_HOME` para lá).
 ## Modelos como serviços (2026-10-02)
 
 - **Imagem vem do InvokeAI** (`http://127.0.0.1:9090`, mantido pelo ai-stack) por HTTP:
-  `src/audiofactory/servicos/invokeai.py`. A `.venv-imagem` e o runner de diffusers saíram.
+  `src/genai/core/servicos/invokeai.py`. A `.venv-imagem` e o runner de diffusers saíram.
   `imagem`, `imagem-aprovar` e o preset `sincronizado` funcionam como antes; os nomes de
   arquivo em cache não mudaram, então o que já foi gerado continua reaproveitado.
   - FLUX.1-schnell NF4, 4 passos: **~10 s por quadro 1344×768**, contra ~17 s do diffusers
@@ -72,6 +72,38 @@ Modelos ficam em `models/` (aponte `HF_HOME` para lá).
 - O TTS continua **no processo**, na `.venv` do projeto: não é runner, e mover a venv do uv
   exigiria `UV_PROJECT_ENVIRONMENT` em toda chamada.
 
+
+## Pacotes por área: `genai` (2026-10-02)
+
+O pacote `audiofactory` virou **`genai`**, e a CLI virou **`genai`** — `audio-factory` continua
+instalado como apelido (os comandos deste arquivo seguem valendo; o `iam voice` do ai-stack
+chama esse nome). Dependências só descem: as áreas importam do `core`, o `core` não importa
+de área nenhuma.
+
+| Pacote | O quê |
+|---|---|
+| `genai/core/` | `config` (Settings), `projeto` (pasta e project.yaml), `estado` (o `Store` do state.db), `llm` (cliente único do LLM), `midia` (`duracao`), `ingest/` (TXT/EPUB/PDF, Wikisource, Acesso ao Insight), `servicos/invokeai` |
+| `genai/audiolivro/` | `projeto` (criar/ingerir/`montar_script`), `pipeline`, `voices`, `legenda`, e os subpacotes `chunk`, `engines`, `narration`, `qa`, `script`, `text`, `audio` (montagem e master) |
+| `genai/video/` | `render`, `slides`, `sincronizado`, `imagem`, `imagem_qa`, `thumbnail` e a trilha: `musica`, `musica_ace`, `musica_musicgen` com os runners ao lado |
+| `genai/publish/` | `youtube` |
+| `genai/cli/` | um módulo por área (`audiolivro`, `video`, `publicar`, `fontes`, `voz`, `sistema`) |
+
+Para ler o histórico abaixo, que cita os caminhos antigos:
+
+| Antes | Agora |
+|---|---|
+| `config.py`, `project.py` | `core/config.py`, `core/projeto.py` + `audiolivro/projeto.py` |
+| `store/db.py` | `core/estado.py` |
+| `ingest/`, `servicos/` | `core/ingest/`, `core/servicos/` |
+| `pipeline.py`, `voices.py`, `chunk/`, `engines/`, `narration/`, `qa/`, `script/`, `text/` | dentro de `audiolivro/`, mesmos nomes |
+| `audio/process.py`, `audio/analise.py` | `audiolivro/audio/` |
+| `audio/musica*.py`, `audio/_ace_runner.py`, `audio/_musicgen_runner.py` | `video/` |
+| `video/legenda.py` | `audiolivro/legenda.py` |
+| `video/_imagem_runner.py` | removido (imagem pelo InvokeAI) |
+
+O `uv sync` deste passo foi feito com **`--inexact`**: o exato desinstalaria `piper-tts` e
+`pathvalidate`, que estão na `.venv` sem estar declarados (nenhum código os usa hoje).
+
 ## Fase 0 — CONCLUÍDA ✅
 
 Benchmark real (`bench/fase0_bench.py`, dados em `bench/out/bench.json`), RTX 5060 Ti:
@@ -94,37 +126,37 @@ Benchmark real (`bench/fase0_bench.py`, dados em `bench/out/bench.json`), RTX 50
 
 | Módulo | Estado | Arquivo |
 |---|---|---|
-| Documento canônico (`script.json`, ids por hash) | ✅ pronto e testado | `src/audiofactory/script/models.py` |
-| Normalizador determinístico pt-BR (Camada 1) | ✅ pronto e testado | `src/audiofactory/narration/rules.py` |
-| Chunker (≤300 chars, funde fragmentos curtos) | ✅ pronto e testado | `src/audiofactory/chunk/splitter.py` |
-| Contrato de motor TTS | ✅ pronto | `src/audiofactory/engines/base.py` |
-| Motor Chatterbox (+ pack pt-br, conditionals congelados) | ✅ escrito, **falta testar com voz de referência** | `src/audiofactory/engines/chatterbox_engine.py` |
-| Fila SQLite / resume | ✅ pronto e testado | `src/audiofactory/store/db.py` |
-| QA por ASR (CER + duração) | ✅ pronto, validado em áudio real | `src/audiofactory/qa/verify.py` |
-| Política de retry melhor-de-N | ✅ pronta e testada | `src/audiofactory/qa/policy.py` |
-| Pós-processamento (FFmpeg, loudnorm) | ✅ pronto, entrega −16,0 LUFS medido | `src/audiofactory/audio/process.py` |
-| Orquestrador (fila → TTS → QA → disco) | ✅ pronto, resume validado | `src/audiofactory/pipeline.py` |
-| Ingest TXT/EPUB + detecção de capítulos | ✅ pronto | `src/audiofactory/ingest/loader.py` |
-| Projeto (project.yaml, script.json, diff.md) | ✅ pronto | `src/audiofactory/project.py` |
-| CLI Typer | ✅ pronta | `src/audiofactory/cli/main.py` |
+| Documento canônico (`script.json`, ids por hash) | ✅ pronto e testado | `src/genai/audiolivro/script/models.py` |
+| Normalizador determinístico pt-BR (Camada 1) | ✅ pronto e testado | `src/genai/audiolivro/narration/rules.py` |
+| Chunker (≤300 chars, funde fragmentos curtos) | ✅ pronto e testado | `src/genai/audiolivro/chunk/splitter.py` |
+| Contrato de motor TTS | ✅ pronto | `src/genai/audiolivro/engines/base.py` |
+| Motor Chatterbox (+ pack pt-br, conditionals congelados) | ✅ escrito, **falta testar com voz de referência** | `src/genai/audiolivro/engines/chatterbox_engine.py` |
+| Fila SQLite / resume | ✅ pronto e testado | `src/genai/core/estado.py` |
+| QA por ASR (CER + duração) | ✅ pronto, validado em áudio real | `src/genai/audiolivro/qa/verify.py` |
+| Política de retry melhor-de-N | ✅ pronta e testada | `src/genai/audiolivro/qa/policy.py` |
+| Pós-processamento (FFmpeg, loudnorm) | ✅ pronto, entrega −16,0 LUFS medido | `src/genai/audiolivro/audio/process.py` |
+| Orquestrador (fila → TTS → QA → disco) | ✅ pronto, resume validado | `src/genai/audiolivro/pipeline.py` |
+| Ingest TXT/EPUB + detecção de capítulos | ✅ pronto | `src/genai/core/ingest/loader.py` |
+| Projeto (project.yaml, script.json, diff.md) | ✅ pronto | `src/genai/audiolivro/projeto.py` |
+| CLI Typer | ✅ pronta | `src/genai/cli/main.py` |
 | **Pack pt-BR dedicado** | ✅ **resolvido — é o padrão** | `engines/chatterbox_engine.py` |
-| Camada 2 do LLM + validador | ✅ pronta, testada com gemma4:12b real | `src/audiofactory/narration/llm.py` |
+| Camada 2 do LLM + validador | ✅ pronta, testada com gemma4:12b real | `src/genai/audiolivro/narration/llm.py` |
 | Subcomando `iam voice` | ✅ pronto | `ai-workspace/ai-stack/bin/iam` (`cmd_voice`) |
-| Registry de vozes (Fase 5) | ✅ código pronto e validado | `src/audiofactory/voices.py` |
-| **Multivoz (elenco por papel)** | ✅ pronto e validado | `src/audiofactory/text/roles.py` |
+| Registry de vozes (Fase 5) | ✅ código pronto e validado | `src/genai/audiolivro/voices.py` |
+| **Multivoz (elenco por papel)** | ✅ pronto e validado | `src/genai/audiolivro/text/roles.py` |
 | Voz template do canal | ✅ `narrador-v1` registrada e em uso | `voices/narrador-v1/` |
 | Motor Kokoro (rascunho/template) | ✅ instalado e funcionando | `iam voice voice template` |
-| Checagem de identidade da voz | ✅ pronta e validada contra impostores | `src/audiofactory/qa/speaker.py` |
+| Checagem de identidade da voz | ✅ pronta e validada contra impostores | `src/genai/audiolivro/qa/speaker.py` |
 | Gravar a voz do Moises | ⏸️ adiado — melhoria de autenticidade, não bloqueio | `iam voice voice record` |
 
 ## Fase 6 — CONCLUÍDA ✅
 
 | Entrega | Estado | Arquivo |
 |---|---|---|
-| Ingest de **PDF** (por blocos, sem OCR) | ✅ pronto e testado | `src/audiofactory/ingest/loader.py` |
+| Ingest de **PDF** (por blocos, sem OCR) | ✅ pronto e testado | `src/genai/core/ingest/loader.py` |
 | `chapters.txt` + arquivo único contínuo | ✅ pronto | `cli/main.py` (`export`) |
 | Export multi-formato (`--formato mp3,aac`) | ✅ pronto | `cli/main.py` |
-| Relatório de QA contra os alvos do TDD | ✅ pronto | `src/audiofactory/qa/report.py` |
+| Relatório de QA contra os alvos do TDD | ✅ pronto | `src/genai/audiolivro/qa/report.py` |
 | 2 workers na GPU | ✅ pronto, **ganho medido de 1,25×** | `pipeline.py` (`_repartir`) |
 | `--free-ollama` | ✅ pronto | `cli/main.py` (`_liberar_ollama`) |
 | Histórico de execuções (tabela `runs`) | ✅ pronto — é o RTF de relógio | `store/db.py` |
