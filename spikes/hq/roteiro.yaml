@@ -1,0 +1,116 @@
+# Spike HQ: "As Quatro Visões" (vida do Buda), 1 página, 6 quadros, estilo ukiyo-e.
+# Texto de domínio público (tradição budista); arte 100% gerada localmente
+# (FLUX.1-schnell e Qwen-Image-Edit 2511, ambos Apache-2.0).
+slug: hq-buda-ukiyoe
+titulo: As Quatro Visões
+
+# Bloco de estilo repetido em TODO prompt -- a consistência visual vem daqui
+# tanto quanto das referências. "no text" é importante: ukiyo-e real tem
+# cartuchos e selos, e o modelo tende a inventar caligrafia falsa.
+estilo: >-
+  ukiyo-e Japanese woodblock print, Edo period, in the style of Hokusai and
+  Hiroshige, bold black ink outlines, flat areas of color, limited palette of
+  indigo blue, vermilion, ochre and pale green, soft bokashi gradient sky,
+  visible washi paper texture and woodgrain. No text, no letters, no
+  calligraphy, no signature, no seals, no cartouche.
+
+personagens:
+  siddhartha:
+    nome: Siddhartha
+    ficha: >-
+      a young Indian prince around 29 years old, slender, serene oval face,
+      calm almond eyes, long black hair tied in a high topknot with a small
+      golden crown ornament, elongated earlobes with round gold earrings,
+      wearing flowing white silk robes with ochre-lined wide sleeves and a long
+      vermilion sash, barefoot
+  channa:
+    nome: Channa
+    ficha: >-
+      a middle-aged Indian charioteer around 45 years old, stocky and broad
+      shouldered, thick black mustache, wearing an indigo blue turban, a sleeveless
+      brown vest, an orange cloth draped over one shoulder, a loose orange
+      dhoti tied with a grey sash, and leather sandals
+
+# Página: 3 tiras. `w`/`h` são a resolução de geração (múltiplos de 16) e
+# definem a proporção do quadro na página.
+pagina:
+  largura: 2480     # A4 300 dpi
+  altura: 3508
+  margem: 120
+  calha: 40
+  tiras:
+    - [1]           # tira 1: quadro largo
+    - [2, 3]
+    - [4, 5, 6]
+
+quadros:
+  - id: 1
+    w: 1536
+    h: 672
+    personagens: [siddhartha]
+    cena: >-
+      wide establishing shot of a grand Indian palace with vermilion rooftops
+      and white walls among mango trees; the prince stands small on a high
+      terrace gazing beyond the palace walls toward distant hills; empty pale
+      sky in the upper left
+    textos:
+      - {tipo: recordatorio, pos: topo-esquerda,
+         texto: "Kapilavastu. O príncipe Siddhartha cresceu cercado de luxo, protegido de toda dor."}
+
+  - id: 2
+    w: 1024
+    h: 896
+    personagens: [siddhartha, channa]
+    cena: >-
+      the prince sits in an ornate wooden chariot pulled by two white horses,
+      the charioteer holds the reins in front of him; they ride out through
+      the great palace gate; medium shot, empty sky at the top
+    textos:
+      - {tipo: fala, quem: siddhartha, pos: topo-direita,
+         texto: "Channa, quero ver o mundo além dos muros."}
+
+  - id: 3
+    w: 1024
+    h: 896
+    personagens: [siddhartha, channa]
+    cena: >-
+      on a dusty village road, a frail old man with white hair, bent over a
+      wooden walking stick, shuffles past; the prince looks at him from the
+      chariot with surprise, the charioteer turns to explain; empty sky at top
+    textos:
+      - {tipo: fala, quem: siddhartha, pos: topo-esquerda, texto: "Quem é aquele homem curvado?"}
+      - {tipo: fala, quem: channa, pos: topo-direita, texto: "Um velho, senhor. A velhice chega a todos."}
+
+  - id: 4
+    w: 768
+    h: 1024
+    personagens: [siddhartha]
+    cena: >-
+      a gaunt sick man lies on a straw mat under a simple thatched shelter,
+      coughing; the prince kneels beside him with a troubled expression;
+      close medium shot, empty space at the top
+    textos:
+      - {tipo: fala, quem: siddhartha, pos: topo, texto: "Também eu posso adoecer?"}
+
+  - id: 5
+    w: 768
+    h: 1024
+    personagens: [siddhartha, channa]
+    cena: >-
+      a funeral procession of mourners carrying a body wrapped in white cloth
+      on a bamboo bier toward a riverbank; the prince and the charioteer watch
+      from the side of the road, solemn; empty sky at the top
+    textos:
+      - {tipo: fala, quem: siddhartha, pos: topo, texto: "E a morte... virá também para mim?"}
+
+  - id: 6
+    w: 768
+    h: 1024
+    personagens: [siddhartha]
+    cena: >-
+      under a large banyan tree, a serene wandering ascetic in a simple
+      saffron robe sits in meditation with closed eyes; the prince stands
+      before him, quiet and contemplative, in profile; empty space at the top
+    textos:
+      - {tipo: recordatorio, pos: topo,
+         texto: "Por fim, viu um asceta em paz. E nasceu nele a busca."}
