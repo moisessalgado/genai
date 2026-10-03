@@ -1,0 +1,2098 @@
+{
+ "ajuda": "Audio Factory — audiolivros narrados por IA, 100% local",
+ "parametros": [
+  {
+   "nome": "install_completion",
+   "tipo": "option",
+   "click_tipo": "boolean",
+   "opts": [
+    "--install-completion"
+   ],
+   "secundarias": [],
+   "obrigatorio": false,
+   "multiplo": false,
+   "padrao": null,
+   "flag": true,
+   "ajuda": "Install completion for the current shell."
+  },
+  {
+   "nome": "show_completion",
+   "tipo": "option",
+   "click_tipo": "boolean",
+   "opts": [
+    "--show-completion"
+   ],
+   "secundarias": [],
+   "obrigatorio": false,
+   "multiplo": false,
+   "padrao": null,
+   "flag": true,
+   "ajuda": "Show completion for the current shell, to copy it or customize the installation."
+  }
+ ],
+ "subcomandos": {
+  "build": {
+   "ajuda": "Monta os capítulos a partir dos chunks aprovados.",
+   "parametros": [
+    {
+     "nome": "slug",
+     "tipo": "argument",
+     "click_tipo": "str",
+     "opts": [
+      "slug"
+     ],
+     "secundarias": [],
+     "obrigatorio": true,
+     "multiplo": false,
+     "padrao": null
+    }
+   ]
+  },
+  "canal": {
+   "ajuda": "Branding do canal no YouTube (descrição, keywords, banner)",
+   "parametros": [],
+   "subcomandos": {
+    "atualizar": {
+     "ajuda": "Atualiza descrição/keywords/país do canal (`brandingSettings`).\n\n`channels.update` substitui o recurso inteiro — este comando busca o estado\natual primeiro e só troca os campos passados aqui, então rodar sem nenhuma\nopção não muda nada.",
+     "parametros": [
+      {
+       "nome": "descricao",
+       "tipo": "option",
+       "click_tipo": "path",
+       "opts": [
+        "--descricao"
+       ],
+       "secundarias": [],
+       "obrigatorio": false,
+       "multiplo": false,
+       "padrao": null,
+       "flag": false,
+       "ajuda": "arquivo .txt com a nova descrição do canal"
+      },
+      {
+       "nome": "keywords",
+       "tipo": "option",
+       "click_tipo": "str",
+       "opts": [
+        "--keywords"
+       ],
+       "secundarias": [],
+       "obrigatorio": false,
+       "multiplo": false,
+       "padrao": null,
+       "flag": false,
+       "ajuda": "separadas por vírgula, ex.: 'budismo,dhamma,cânone páli'"
+      },
+      {
+       "nome": "pais",
+       "tipo": "option",
+       "click_tipo": "str",
+       "opts": [
+        "--pais"
+       ],
+       "secundarias": [],
+       "obrigatorio": false,
+       "multiplo": false,
+       "padrao": null,
+       "flag": false,
+       "ajuda": "código ISO, ex.: BR"
+      },
+      {
+       "nome": "client_secret",
+       "tipo": "option",
+       "click_tipo": "path",
+       "opts": [
+        "--client-secret"
+       ],
+       "secundarias": [],
+       "obrigatorio": false,
+       "multiplo": false,
+       "padrao": null,
+       "flag": false,
+       "ajuda": null
+      },
+      {
+       "nome": "token",
+       "tipo": "option",
+       "click_tipo": "path",
+       "opts": [
+        "--token"
+       ],
+       "secundarias": [],
+       "obrigatorio": false,
+       "multiplo": false,
+       "padrao": null,
+       "flag": false,
+       "ajuda": "padrão: config/youtube_canal_token.json — use outro arquivo para gerenciar um segundo canal da mesma conta Google sem sobrescrever o token do primeiro"
+      }
+     ]
+    },
+    "banner": {
+     "ajuda": "Sobe a arte de capa do canal (recomendado: 2560×1440, ≤6 MB).\n\nA foto de perfil/logo do canal não tem endpoint na API do YouTube — só se\ntroca manualmente em https://studio.youtube.com.",
+     "parametros": [
+      {
+       "nome": "imagem",
+       "tipo": "argument",
+       "click_tipo": "path",
+       "opts": [
+        "imagem"
+       ],
+       "secundarias": [],
+       "obrigatorio": true,
+       "multiplo": false,
+       "padrao": null
+      },
+      {
+       "nome": "client_secret",
+       "tipo": "option",
+       "click_tipo": "path",
+       "opts": [
+        "--client-secret"
+       ],
+       "secundarias": [],
+       "obrigatorio": false,
+       "multiplo": false,
+       "padrao": null,
+       "flag": false,
+       "ajuda": null
+      },
+      {
+       "nome": "token",
+       "tipo": "option",
+       "click_tipo": "path",
+       "opts": [
+        "--token"
+       ],
+       "secundarias": [],
+       "obrigatorio": false,
+       "multiplo": false,
+       "padrao": null,
+       "flag": false,
+       "ajuda": "padrão: config/youtube_canal_token.json — use outro arquivo para gerenciar um segundo canal da mesma conta Google sem sobrescrever o token do primeiro"
+      }
+     ]
+    },
+    "marca-dagua": {
+     "ajuda": "Define a marca d'água do canal — PNG com alfa recomendado.\n\nAparece sobre o vídeo o tempo todo e funciona como botão de inscrição ao\npassar o mouse; vale para os vídeos já publicados também.",
+     "parametros": [
+      {
+       "nome": "imagem",
+       "tipo": "argument",
+       "click_tipo": "path",
+       "opts": [
+        "imagem"
+       ],
+       "secundarias": [],
+       "obrigatorio": true,
+       "multiplo": false,
+       "padrao": null
+      },
+      {
+       "nome": "canto",
+       "tipo": "option",
+       "click_tipo": "str",
+       "opts": [
+        "--canto"
+       ],
+       "secundarias": [],
+       "obrigatorio": false,
+       "multiplo": false,
+       "padrao": "bottomRight",
+       "flag": false,
+       "ajuda": "topLeft, topRight, bottomLeft ou bottomRight"
+      },
+      {
+       "nome": "client_secret",
+       "tipo": "option",
+       "click_tipo": "path",
+       "opts": [
+        "--client-secret"
+       ],
+       "secundarias": [],
+       "obrigatorio": false,
+       "multiplo": false,
+       "padrao": null,
+       "flag": false,
+       "ajuda": null
+      },
+      {
+       "nome": "token",
+       "tipo": "option",
+       "click_tipo": "path",
+       "opts": [
+        "--token"
+       ],
+       "secundarias": [],
+       "obrigatorio": false,
+       "multiplo": false,
+       "padrao": null,
+       "flag": false,
+       "ajuda": "padrão: config/youtube_canal_token.json — use outro arquivo para gerenciar um segundo canal da mesma conta Google sem sobrescrever o token do primeiro"
+      }
+     ]
+    },
+    "mostrar": {
+     "ajuda": "Mostra a descrição, keywords e país atuais do canal.",
+     "parametros": [
+      {
+       "nome": "client_secret",
+       "tipo": "option",
+       "click_tipo": "path",
+       "opts": [
+        "--client-secret"
+       ],
+       "secundarias": [],
+       "obrigatorio": false,
+       "multiplo": false,
+       "padrao": null,
+       "flag": false,
+       "ajuda": "padrão: config/youtube_client_secret.json"
+      },
+      {
+       "nome": "token",
+       "tipo": "option",
+       "click_tipo": "path",
+       "opts": [
+        "--token"
+       ],
+       "secundarias": [],
+       "obrigatorio": false,
+       "multiplo": false,
+       "padrao": null,
+       "flag": false,
+       "ajuda": "padrão: config/youtube_canal_token.json — use outro arquivo para gerenciar um segundo canal da mesma conta Google sem sobrescrever o token do primeiro"
+      }
+     ]
+    }
+   }
+  },
+  "doctor": {
+   "ajuda": "Verifica GPU, torch, FFmpeg e licenças dos pesos.",
+   "parametros": []
+  },
+  "export": {
+   "ajuda": "Masteriza, exporta e escreve o chapters.txt.",
+   "parametros": [
+    {
+     "nome": "slug",
+     "tipo": "argument",
+     "click_tipo": "str",
+     "opts": [
+      "slug"
+     ],
+     "secundarias": [],
+     "obrigatorio": true,
+     "multiplo": false,
+     "padrao": null
+    },
+    {
+     "nome": "formato",
+     "tipo": "option",
+     "click_tipo": "str",
+     "opts": [
+      "--formato"
+     ],
+     "secundarias": [],
+     "obrigatorio": false,
+     "multiplo": false,
+     "padrao": "mp3",
+     "flag": false,
+     "ajuda": "mp3, aac, flac, wav — separados por vírgula"
+    },
+    {
+     "nome": "juntar",
+     "tipo": "option",
+     "click_tipo": "boolean",
+     "opts": [
+      "--juntar"
+     ],
+     "secundarias": [
+      "--sem-juntar"
+     ],
+     "obrigatorio": false,
+     "multiplo": false,
+     "padrao": true,
+     "flag": true,
+     "ajuda": "também gera o arquivo único contínuo"
+    },
+    {
+     "nome": "bitrate",
+     "tipo": "option",
+     "click_tipo": "str",
+     "opts": [
+      "--bitrate"
+     ],
+     "secundarias": [],
+     "obrigatorio": false,
+     "multiplo": false,
+     "padrao": "192k",
+     "flag": false,
+     "ajuda": null
+    }
+   ]
+  },
+  "imagem": {
+   "ajuda": "Gera candidatos em cache/imagens/, para revisar antes de `imagem-aprovar`.\n\nNão escreve direto no acervo: nem toda imagem gerada presta, e curadoria é\nhumana. Ver `imagem-aprovar` para o passo seguinte.",
+   "parametros": [
+    {
+     "nome": "prompt",
+     "tipo": "argument",
+     "click_tipo": "str",
+     "opts": [
+      "prompt"
+     ],
+     "secundarias": [],
+     "obrigatorio": false,
+     "multiplo": false,
+     "padrao": null
+    },
+    {
+     "nome": "arquivo",
+     "tipo": "option",
+     "click_tipo": "path",
+     "opts": [
+      "--arquivo"
+     ],
+     "secundarias": [],
+     "obrigatorio": false,
+     "multiplo": false,
+     "padrao": null,
+     "flag": false,
+     "ajuda": "um prompt por linha, para lote"
+    },
+    {
+     "nome": "modelo",
+     "tipo": "option",
+     "click_tipo": "str",
+     "opts": [
+      "--modelo"
+     ],
+     "secundarias": [],
+     "obrigatorio": false,
+     "multiplo": false,
+     "padrao": "flux",
+     "flag": false,
+     "ajuda": "flux, sd ou sd:large"
+    },
+    {
+     "nome": "n",
+     "tipo": "option",
+     "click_tipo": "int",
+     "opts": [
+      "--n"
+     ],
+     "secundarias": [],
+     "obrigatorio": false,
+     "multiplo": false,
+     "padrao": 4,
+     "flag": false,
+     "ajuda": "variações por prompt"
+    },
+    {
+     "nome": "largura",
+     "tipo": "option",
+     "click_tipo": "int",
+     "opts": [
+      "--largura"
+     ],
+     "secundarias": [],
+     "obrigatorio": false,
+     "multiplo": false,
+     "padrao": null,
+     "flag": false,
+     "ajuda": "padrão: 1344 (~16:9)"
+    },
+    {
+     "nome": "altura",
+     "tipo": "option",
+     "click_tipo": "int",
+     "opts": [
+      "--altura"
+     ],
+     "secundarias": [],
+     "obrigatorio": false,
+     "multiplo": false,
+     "padrao": null,
+     "flag": false,
+     "ajuda": "padrão: 768 (~16:9)"
+    },
+    {
+     "nome": "passos",
+     "tipo": "option",
+     "click_tipo": "int",
+     "opts": [
+      "--passos"
+     ],
+     "secundarias": [],
+     "obrigatorio": false,
+     "multiplo": false,
+     "padrao": null,
+     "flag": false,
+     "ajuda": "padrão depende do modelo"
+    },
+    {
+     "nome": "guidance",
+     "tipo": "option",
+     "click_tipo": "float",
+     "opts": [
+      "--guidance"
+     ],
+     "secundarias": [],
+     "obrigatorio": false,
+     "multiplo": false,
+     "padrao": null,
+     "flag": false,
+     "ajuda": "padrão depende do modelo"
+    },
+    {
+     "nome": "negativo",
+     "tipo": "option",
+     "click_tipo": "str",
+     "opts": [
+      "--negativo"
+     ],
+     "secundarias": [],
+     "obrigatorio": false,
+     "multiplo": false,
+     "padrao": null,
+     "flag": false,
+     "ajuda": "negative prompt — só tem efeito com --modelo sd/sd:large"
+    }
+   ]
+  },
+  "imagem-aprovar": {
+   "ajuda": "Converte os candidatos escolhidos (JPEG q2, ≤1920px) e move para o acervo.",
+   "parametros": [
+    {
+     "nome": "arquivos",
+     "tipo": "argument",
+     "click_tipo": "path",
+     "opts": [
+      "arquivos"
+     ],
+     "secundarias": [],
+     "obrigatorio": true,
+     "multiplo": false,
+     "padrao": null
+    },
+    {
+     "nome": "slides_dir",
+     "tipo": "option",
+     "click_tipo": "path",
+     "opts": [
+      "--slides-dir"
+     ],
+     "secundarias": [],
+     "obrigatorio": false,
+     "multiplo": false,
+     "padrao": null,
+     "flag": false,
+     "ajuda": "padrão: assets/slides"
+    }
+   ]
+  },
+  "lexico-antigo": {
+   "ajuda": "Varre clean.txt em busca de ortografia pré-1943 e propõe entradas de léxico.\n\nRoda a Camada 2 (Ollama) palavra por palavra, com o mesmo validador\nconservador da atribuição de elenco (`narration/ortografia.py`): só entra no\nléxico o que sobreviver. Nada é aplicado ao texto aqui — o arquivo gerado é\nlexicon/*.yaml, revisável a mão antes do próximo `iam voice script` pegá-lo.",
+   "parametros": [
+    {
+     "nome": "slug",
+     "tipo": "argument",
+     "click_tipo": "str",
+     "opts": [
+      "slug"
+     ],
+     "secundarias": [],
+     "obrigatorio": true,
+     "multiplo": false,
+     "padrao": null
+    },
+    {
+     "nome": "saida",
+     "tipo": "option",
+     "click_tipo": "path",
+     "opts": [
+      "--saida"
+     ],
+     "secundarias": [],
+     "obrigatorio": false,
+     "multiplo": false,
+     "padrao": null,
+     "flag": false,
+     "ajuda": "arquivo lexicon/*.yaml de destino (padrão: lexicon/pt-BR.ortografia-1943.yaml)"
+    },
+    {
+     "nome": "modelo",
+     "tipo": "option",
+     "click_tipo": "str",
+     "opts": [
+      "--modelo"
+     ],
+     "secundarias": [],
+     "obrigatorio": false,
+     "multiplo": false,
+     "padrao": null,
+     "flag": false,
+     "ajuda": "modelo do Ollama (padrão: gemma4:12b)"
+    }
+   ]
+  },
+  "musica": {
+   "ajuda": "Gera as peças da trilha e mostra onde ficaram, para ouvir antes de renderizar.\n\nExiste porque a alternativa é descobrir que a paleta não serve depois de\nrenderizar uma hora de vídeo.",
+   "parametros": [
+    {
+     "nome": "paleta",
+     "tipo": "option",
+     "click_tipo": "str",
+     "opts": [
+      "--paleta"
+     ],
+     "secundarias": [],
+     "obrigatorio": false,
+     "multiplo": false,
+     "padrao": "contemplativo",
+     "flag": false,
+     "ajuda": "contemplativo, drone, sobrio, piano ou flauta"
+    },
+    {
+     "nome": "motor",
+     "tipo": "option",
+     "click_tipo": "str",
+     "opts": [
+      "--motor"
+     ],
+     "secundarias": [],
+     "obrigatorio": false,
+     "multiplo": false,
+     "padrao": "ace",
+     "flag": false,
+     "ajuda": "ace ou musicgen"
+    },
+    {
+     "nome": "duracao",
+     "tipo": "option",
+     "click_tipo": "float",
+     "opts": [
+      "--duracao"
+     ],
+     "secundarias": [],
+     "obrigatorio": false,
+     "multiplo": false,
+     "padrao": 0.0,
+     "flag": false,
+     "ajuda": "se >0, monta também um leito desta duração, para ouvir a emenda"
+    }
+   ]
+  },
+  "new": {
+   "ajuda": "Cria um projeto a partir de um arquivo de texto.",
+   "parametros": [
+    {
+     "nome": "slug",
+     "tipo": "argument",
+     "click_tipo": "str",
+     "opts": [
+      "slug"
+     ],
+     "secundarias": [],
+     "obrigatorio": true,
+     "multiplo": false,
+     "padrao": null
+    },
+    {
+     "nome": "fonte",
+     "tipo": "option",
+     "click_tipo": "path",
+     "opts": [
+      "--from"
+     ],
+     "secundarias": [],
+     "obrigatorio": true,
+     "multiplo": false,
+     "padrao": null,
+     "flag": false,
+     "ajuda": null
+    },
+    {
+     "nome": "narrator",
+     "tipo": "option",
+     "click_tipo": "str",
+     "opts": [
+      "--narrator"
+     ],
+     "secundarias": [],
+     "obrigatorio": false,
+     "multiplo": false,
+     "padrao": "default",
+     "flag": false,
+     "ajuda": null
+    },
+    {
+     "nome": "titulo",
+     "tipo": "option",
+     "click_tipo": "str",
+     "opts": [
+      "--titulo"
+     ],
+     "secundarias": [],
+     "obrigatorio": false,
+     "multiplo": false,
+     "padrao": null,
+     "flag": false,
+     "ajuda": null
+    }
+   ]
+  },
+  "publish": {
+   "ajuda": "Sobe o MP4 do projeto para o YouTube, com metadados do project.yaml.\n\nExige credenciais OAuth próprias (veja docs/youtube-publish.md) — a ferramenta\nnão decide o que publicar, só preenche o que já está registrado no projeto.",
+   "parametros": [
+    {
+     "nome": "slug",
+     "tipo": "argument",
+     "click_tipo": "str",
+     "opts": [
+      "slug"
+     ],
+     "secundarias": [],
+     "obrigatorio": true,
+     "multiplo": false,
+     "padrao": null
+    },
+    {
+     "nome": "arquivo",
+     "tipo": "option",
+     "click_tipo": "path",
+     "opts": [
+      "--arquivo"
+     ],
+     "secundarias": [],
+     "obrigatorio": false,
+     "multiplo": false,
+     "padrao": null,
+     "flag": false,
+     "ajuda": "MP4 a enviar (padrão: o único .mp4 em output/)"
+    },
+    {
+     "nome": "privacidade",
+     "tipo": "option",
+     "click_tipo": "str",
+     "opts": [
+      "--privacidade"
+     ],
+     "secundarias": [],
+     "obrigatorio": false,
+     "multiplo": false,
+     "padrao": "private",
+     "flag": false,
+     "ajuda": "private, unlisted ou public"
+    },
+    {
+     "nome": "tags",
+     "tipo": "option",
+     "click_tipo": "str",
+     "opts": [
+      "--tags"
+     ],
+     "secundarias": [],
+     "obrigatorio": false,
+     "multiplo": false,
+     "padrao": null,
+     "flag": false,
+     "ajuda": "tags separadas por vírgula"
+    },
+    {
+     "nome": "categoria",
+     "tipo": "option",
+     "click_tipo": "str",
+     "opts": [
+      "--categoria"
+     ],
+     "secundarias": [],
+     "obrigatorio": false,
+     "multiplo": false,
+     "padrao": "27",
+     "flag": false,
+     "ajuda": "categoria do YouTube (27 = Educação)"
+    },
+    {
+     "nome": "client_secret",
+     "tipo": "option",
+     "click_tipo": "path",
+     "opts": [
+      "--client-secret"
+     ],
+     "secundarias": [],
+     "obrigatorio": false,
+     "multiplo": false,
+     "padrao": null,
+     "flag": false,
+     "ajuda": "client_secret.json (padrão: config/youtube_client_secret.json)"
+    },
+    {
+     "nome": "miniatura",
+     "tipo": "option",
+     "click_tipo": "path",
+     "opts": [
+      "--miniatura"
+     ],
+     "secundarias": [],
+     "obrigatorio": false,
+     "multiplo": false,
+     "padrao": null,
+     "flag": false,
+     "ajuda": "imagem para a miniatura (padrão: frame extraído do próprio MP4)"
+    },
+    {
+     "nome": "miniatura_preset",
+     "tipo": "option",
+     "click_tipo": "str",
+     "opts": [
+      "--miniatura-preset"
+     ],
+     "secundarias": [],
+     "obrigatorio": false,
+     "multiplo": false,
+     "padrao": "slides",
+     "flag": false,
+     "ajuda": "preset usado no `video`, para escolher um instante fora do dissolve"
+    },
+    {
+     "nome": "sem_miniatura",
+     "tipo": "option",
+     "click_tipo": "boolean",
+     "opts": [
+      "--sem-miniatura"
+     ],
+     "secundarias": [],
+     "obrigatorio": false,
+     "multiplo": false,
+     "padrao": false,
+     "flag": true,
+     "ajuda": "não define miniatura"
+    },
+    {
+     "nome": "forcar",
+     "tipo": "option",
+     "click_tipo": "boolean",
+     "opts": [
+      "--forcar"
+     ],
+     "secundarias": [],
+     "obrigatorio": false,
+     "multiplo": false,
+     "padrao": false,
+     "flag": true,
+     "ajuda": "sobe mesmo com rights.status incompleto ou marcado como teste"
+    },
+    {
+     "nome": "republicar",
+     "tipo": "option",
+     "click_tipo": "boolean",
+     "opts": [
+      "--republicar"
+     ],
+     "secundarias": [],
+     "obrigatorio": false,
+     "multiplo": false,
+     "padrao": false,
+     "flag": true,
+     "ajuda": "sobe de novo um projeto que já tem vídeo publicado"
+    },
+    {
+     "nome": "token",
+     "tipo": "option",
+     "click_tipo": "path",
+     "opts": [
+      "--token"
+     ],
+     "secundarias": [],
+     "obrigatorio": false,
+     "multiplo": false,
+     "padrao": null,
+     "flag": false,
+     "ajuda": "token de upload (padrão: config/youtube_token.json) — use outro para publicar num canal diferente do padrão"
+    }
+   ]
+  },
+  "report": {
+   "ajuda": "Confronta as métricas do projeto com os alvos objetivos do TDD.",
+   "parametros": [
+    {
+     "nome": "slug",
+     "tipo": "argument",
+     "click_tipo": "str",
+     "opts": [
+      "slug"
+     ],
+     "secundarias": [],
+     "obrigatorio": true,
+     "multiplo": false,
+     "padrao": null
+    },
+    {
+     "nome": "medir",
+     "tipo": "option",
+     "click_tipo": "boolean",
+     "opts": [
+      "--medir"
+     ],
+     "secundarias": [
+      "--sem-medir"
+     ],
+     "obrigatorio": false,
+     "multiplo": false,
+     "padrao": true,
+     "flag": true,
+     "ajuda": "medir loudness dos masters (usa ffmpeg)"
+    }
+   ]
+  },
+  "review": {
+   "ajuda": "Lista — ou resolve — os chunks que precisam de revisão humana.",
+   "parametros": [
+    {
+     "nome": "slug",
+     "tipo": "argument",
+     "click_tipo": "str",
+     "opts": [
+      "slug"
+     ],
+     "secundarias": [],
+     "obrigatorio": true,
+     "multiplo": false,
+     "padrao": null
+    },
+    {
+     "nome": "aprovar",
+     "tipo": "option",
+     "click_tipo": "str",
+     "opts": [
+      "--aprovar"
+     ],
+     "secundarias": [],
+     "obrigatorio": false,
+     "multiplo": false,
+     "padrao": null,
+     "flag": false,
+     "ajuda": "aceita o chunk como está, depois de ouvir"
+    },
+    {
+     "nome": "regerar",
+     "tipo": "option",
+     "click_tipo": "str",
+     "opts": [
+      "--regerar"
+     ],
+     "secundarias": [],
+     "obrigatorio": false,
+     "multiplo": false,
+     "padrao": null,
+     "flag": false,
+     "ajuda": "devolve o chunk à fila, para outra seed"
+    }
+   ]
+  },
+  "run": {
+   "ajuda": "Sintetiza os chunks pendentes. Retomar é o comportamento padrão.",
+   "parametros": [
+    {
+     "nome": "slug",
+     "tipo": "argument",
+     "click_tipo": "str",
+     "opts": [
+      "slug"
+     ],
+     "secundarias": [],
+     "obrigatorio": true,
+     "multiplo": false,
+     "padrao": null
+    },
+    {
+     "nome": "chapters",
+     "tipo": "option",
+     "click_tipo": "str",
+     "opts": [
+      "--chapters"
+     ],
+     "secundarias": [],
+     "obrigatorio": false,
+     "multiplo": false,
+     "padrao": null,
+     "flag": false,
+     "ajuda": "ex.: 1,3-5"
+    },
+    {
+     "nome": "no_qa",
+     "tipo": "option",
+     "click_tipo": "boolean",
+     "opts": [
+      "--no-qa"
+     ],
+     "secundarias": [],
+     "obrigatorio": false,
+     "multiplo": false,
+     "padrao": false,
+     "flag": true,
+     "ajuda": null
+    },
+    {
+     "nome": "voice",
+     "tipo": "option",
+     "click_tipo": "path",
+     "opts": [
+      "--voice"
+     ],
+     "secundarias": [],
+     "obrigatorio": false,
+     "multiplo": false,
+     "padrao": null,
+     "flag": false,
+     "ajuda": "WAV de referência (sobrepõe o narrator)"
+    },
+    {
+     "nome": "ptbr_pack",
+     "tipo": "option",
+     "click_tipo": "boolean",
+     "opts": [
+      "--ptbr-pack"
+     ],
+     "secundarias": [
+      "--no-ptbr-pack"
+     ],
+     "obrigatorio": false,
+     "multiplo": false,
+     "padrao": true,
+     "flag": true,
+     "ajuda": null
+    },
+    {
+     "nome": "workers",
+     "tipo": "option",
+     "click_tipo": "int",
+     "opts": [
+      "--workers"
+     ],
+     "secundarias": [],
+     "obrigatorio": false,
+     "multiplo": false,
+     "padrao": 1,
+     "flag": false,
+     "ajuda": "processos de síntese em paralelo na GPU"
+    },
+    {
+     "nome": "free_ollama",
+     "tipo": "option",
+     "click_tipo": "boolean",
+     "opts": [
+      "--free-ollama"
+     ],
+     "secundarias": [],
+     "obrigatorio": false,
+     "multiplo": false,
+     "padrao": false,
+     "flag": true,
+     "ajuda": "descarrega os modelos do Ollama antes de sintetizar"
+    }
+   ]
+  },
+  "script": {
+   "ajuda": "Ingere, normaliza e gera script.json + diff.md.",
+   "parametros": [
+    {
+     "nome": "slug",
+     "tipo": "argument",
+     "click_tipo": "str",
+     "opts": [
+      "slug"
+     ],
+     "secundarias": [],
+     "obrigatorio": true,
+     "multiplo": false,
+     "padrao": null
+    },
+    {
+     "nome": "max_chars",
+     "tipo": "option",
+     "click_tipo": "int",
+     "opts": [
+      "--max-chars"
+     ],
+     "secundarias": [],
+     "obrigatorio": false,
+     "multiplo": false,
+     "padrao": 300,
+     "flag": false,
+     "ajuda": null
+    },
+    {
+     "nome": "llm",
+     "tipo": "option",
+     "click_tipo": "boolean",
+     "opts": [
+      "--llm"
+     ],
+     "secundarias": [
+      "--no-llm"
+     ],
+     "obrigatorio": false,
+     "multiplo": false,
+     "padrao": false,
+     "flag": true,
+     "ajuda": "Camada 2: resolve spans ambíguos via Ollama"
+    },
+    {
+     "nome": "modelo",
+     "tipo": "option",
+     "click_tipo": "str",
+     "opts": [
+      "--modelo"
+     ],
+     "secundarias": [],
+     "obrigatorio": false,
+     "multiplo": false,
+     "padrao": null,
+     "flag": false,
+     "ajuda": "modelo do Ollama (padrão: gemma4:12b)"
+    }
+   ]
+  },
+  "status": {
+   "ajuda": "Progresso, falhas e CER médio.",
+   "parametros": [
+    {
+     "nome": "slug",
+     "tipo": "argument",
+     "click_tipo": "str",
+     "opts": [
+      "slug"
+     ],
+     "secundarias": [],
+     "obrigatorio": true,
+     "multiplo": false,
+     "padrao": null
+    }
+   ]
+  },
+  "sutta": {
+   "ajuda": "Pipeline inteiro a partir de uma página de sutta do Acesso ao Insight.\n\nFaz o caminho todo — baixa e limpa a página, monta o script, sintetiza,\nmasteriza, renderiza o MP4 e sobe para o YouTube — para cada endereço da\nlinha de comando. Um endereço que falha não derruba os seguintes.\n\nO texto é uma TRADUÇÃO de terceiro sob licença de distribuição gratuita: a\nprocedência e os termos são colhidos da própria página e gravados em\n`rights:`, e a descrição do vídeo os reproduz. A decisão de publicar\ncontinua sendo do operador (ESTADO.md) — por isso o padrão é `private`.",
+   "parametros": [
+    {
+     "nome": "urls",
+     "tipo": "argument",
+     "click_tipo": "str",
+     "opts": [
+      "urls"
+     ],
+     "secundarias": [],
+     "obrigatorio": true,
+     "multiplo": false,
+     "padrao": null
+    },
+    {
+     "nome": "narrator",
+     "tipo": "option",
+     "click_tipo": "str",
+     "opts": [
+      "--narrator"
+     ],
+     "secundarias": [],
+     "obrigatorio": false,
+     "multiplo": false,
+     "padrao": "narrador-v2",
+     "flag": false,
+     "ajuda": "voz do canal (v2 lê mais devagar — é a do sutta)"
+    },
+    {
+     "nome": "ate",
+     "tipo": "option",
+     "click_tipo": "str",
+     "opts": [
+      "--ate"
+     ],
+     "secundarias": [],
+     "obrigatorio": false,
+     "multiplo": false,
+     "padrao": "publicar",
+     "flag": false,
+     "ajuda": "para depois desta etapa: texto, script, audio, video, publicar"
+    },
+    {
+     "nome": "privacidade",
+     "tipo": "option",
+     "click_tipo": "str",
+     "opts": [
+      "--privacidade"
+     ],
+     "secundarias": [],
+     "obrigatorio": false,
+     "multiplo": false,
+     "padrao": "private",
+     "flag": false,
+     "ajuda": "private, unlisted ou public"
+    },
+    {
+     "nome": "tags",
+     "tipo": "option",
+     "click_tipo": "str",
+     "opts": [
+      "--tags"
+     ],
+     "secundarias": [],
+     "obrigatorio": false,
+     "multiplo": false,
+     "padrao": null,
+     "flag": false,
+     "ajuda": "tags separadas por vírgula"
+    },
+    {
+     "nome": "llm",
+     "tipo": "option",
+     "click_tipo": "boolean",
+     "opts": [
+      "--llm"
+     ],
+     "secundarias": [
+      "--no-llm"
+     ],
+     "obrigatorio": false,
+     "multiplo": false,
+     "padrao": false,
+     "flag": true,
+     "ajuda": "Camada 2 do normalizador (Ollama) sobre os spans ambíguos"
+    },
+    {
+     "nome": "workers",
+     "tipo": "option",
+     "click_tipo": "int",
+     "opts": [
+      "--workers"
+     ],
+     "secundarias": [],
+     "obrigatorio": false,
+     "multiplo": false,
+     "padrao": 1,
+     "flag": false,
+     "ajuda": "processos de síntese na GPU"
+    },
+    {
+     "nome": "free_ollama",
+     "tipo": "option",
+     "click_tipo": "boolean",
+     "opts": [
+      "--free-ollama"
+     ],
+     "secundarias": [],
+     "obrigatorio": false,
+     "multiplo": false,
+     "padrao": false,
+     "flag": true,
+     "ajuda": null
+    },
+    {
+     "nome": "preset",
+     "tipo": "option",
+     "click_tipo": "str",
+     "opts": [
+      "--preset"
+     ],
+     "secundarias": [],
+     "obrigatorio": false,
+     "multiplo": false,
+     "padrao": "slides",
+     "flag": false,
+     "ajuda": "preset visual do vídeo"
+    },
+    {
+     "nome": "musica",
+     "tipo": "option",
+     "click_tipo": "str",
+     "opts": [
+      "--musica"
+     ],
+     "secundarias": [],
+     "obrigatorio": false,
+     "multiplo": false,
+     "padrao": "musicgen:bansuri",
+     "flag": false,
+     "ajuda": "trilha: ace, musicgen (ex.: 'musicgen:bansuri'), gerada, nenhuma ou arquivo"
+    },
+    {
+     "nome": "slides_dir",
+     "tipo": "option",
+     "click_tipo": "path",
+     "opts": [
+      "--slides-dir"
+     ],
+     "secundarias": [],
+     "obrigatorio": false,
+     "multiplo": false,
+     "padrao": null,
+     "flag": false,
+     "ajuda": "pasta das imagens de fundo"
+    },
+    {
+     "nome": "slides_seg",
+     "tipo": "option",
+     "click_tipo": "float",
+     "opts": [
+      "--slides-seg"
+     ],
+     "secundarias": [],
+     "obrigatorio": false,
+     "multiplo": false,
+     "padrao": 45.0,
+     "flag": false,
+     "ajuda": null
+    },
+    {
+     "nome": "slides_seed",
+     "tipo": "option",
+     "click_tipo": "int",
+     "opts": [
+      "--slides-seed"
+     ],
+     "secundarias": [],
+     "obrigatorio": false,
+     "multiplo": false,
+     "padrao": null,
+     "flag": false,
+     "ajuda": null
+    },
+    {
+     "nome": "legenda",
+     "tipo": "option",
+     "click_tipo": "boolean",
+     "opts": [
+      "--legenda"
+     ],
+     "secundarias": [
+      "--sem-legenda"
+     ],
+     "obrigatorio": false,
+     "multiplo": false,
+     "padrao": true,
+     "flag": true,
+     "ajuda": null
+    },
+    {
+     "nome": "gpu",
+     "tipo": "option",
+     "click_tipo": "boolean",
+     "opts": [
+      "--gpu"
+     ],
+     "secundarias": [
+      "--cpu"
+     ],
+     "obrigatorio": false,
+     "multiplo": false,
+     "padrao": true,
+     "flag": true,
+     "ajuda": null
+    },
+    {
+     "nome": "refazer",
+     "tipo": "option",
+     "click_tipo": "boolean",
+     "opts": [
+      "--refazer"
+     ],
+     "secundarias": [],
+     "obrigatorio": false,
+     "multiplo": false,
+     "padrao": false,
+     "flag": true,
+     "ajuda": "baixa a página de novo, reescreve o project.yaml e re-renderiza o MP4"
+    },
+    {
+     "nome": "sim",
+     "tipo": "option",
+     "click_tipo": "boolean",
+     "opts": [
+      "--sim"
+     ],
+     "secundarias": [],
+     "obrigatorio": false,
+     "multiplo": false,
+     "padrao": false,
+     "flag": true,
+     "ajuda": "não pergunta nada (necessário para --privacidade public/unlisted)"
+    }
+   ]
+  },
+  "video": {
+   "ajuda": "Gera o MP4 para o YouTube, com trilha opcional sob a narração.",
+   "parametros": [
+    {
+     "nome": "slug",
+     "tipo": "argument",
+     "click_tipo": "str",
+     "opts": [
+      "slug"
+     ],
+     "secundarias": [],
+     "obrigatorio": true,
+     "multiplo": false,
+     "padrao": null
+    },
+    {
+     "nome": "preset",
+     "tipo": "option",
+     "click_tipo": "str",
+     "opts": [
+      "--preset"
+     ],
+     "secundarias": [],
+     "obrigatorio": false,
+     "multiplo": false,
+     "padrao": "slides",
+     "flag": false,
+     "ajuda": "slides, sincronizado, ondas, espectro, estatico ou gradiente"
+    },
+    {
+     "nome": "musica",
+     "tipo": "option",
+     "click_tipo": "str",
+     "opts": [
+      "--musica"
+     ],
+     "secundarias": [],
+     "obrigatorio": false,
+     "multiplo": false,
+     "padrao": "ace",
+     "flag": false,
+     "ajuda": "'ace' ou 'musicgen' (modelos dedicados; 'ace:sobrio' / 'musicgen:sobrio' escolhem a paleta), 'gerada' (sintetizada), 'nenhuma', ou caminho de um arquivo"
+    },
+    {
+     "nome": "capa",
+     "tipo": "option",
+     "click_tipo": "path",
+     "opts": [
+      "--capa"
+     ],
+     "secundarias": [],
+     "obrigatorio": false,
+     "multiplo": false,
+     "padrao": null,
+     "flag": false,
+     "ajuda": "imagem fixa de fundo (sobrepõe o preset)"
+    },
+    {
+     "nome": "slides_dir",
+     "tipo": "option",
+     "click_tipo": "path",
+     "opts": [
+      "--slides-dir"
+     ],
+     "secundarias": [],
+     "obrigatorio": false,
+     "multiplo": false,
+     "padrao": null,
+     "flag": false,
+     "ajuda": "pasta das imagens do preset slides (padrão: assets/slides)"
+    },
+    {
+     "nome": "slides_seg",
+     "tipo": "option",
+     "click_tipo": "float",
+     "opts": [
+      "--slides-seg"
+     ],
+     "secundarias": [],
+     "obrigatorio": false,
+     "multiplo": false,
+     "padrao": 45.0,
+     "flag": false,
+     "ajuda": "segundos que cada imagem fica na tela"
+    },
+    {
+     "nome": "slides_seed",
+     "tipo": "option",
+     "click_tipo": "int",
+     "opts": [
+      "--slides-seed"
+     ],
+     "secundarias": [],
+     "obrigatorio": false,
+     "multiplo": false,
+     "padrao": null,
+     "flag": false,
+     "ajuda": "fixa o sorteio das imagens; sem isso cada render sorteia de novo"
+    },
+    {
+     "nome": "trilha_lufs",
+     "tipo": "option",
+     "click_tipo": "float",
+     "opts": [
+      "--trilha-lufs"
+     ],
+     "secundarias": [],
+     "obrigatorio": false,
+     "multiplo": false,
+     "padrao": null,
+     "flag": false,
+     "ajuda": "nível da trilha (padrão −29,5)"
+    },
+    {
+     "nome": "legenda",
+     "tipo": "option",
+     "click_tipo": "boolean",
+     "opts": [
+      "--legenda"
+     ],
+     "secundarias": [
+      "--sem-legenda"
+     ],
+     "obrigatorio": false,
+     "multiplo": false,
+     "padrao": true,
+     "flag": true,
+     "ajuda": "queima o texto sincronizado (usa o .srt gerado pelo build)"
+    },
+    {
+     "nome": "musica_pecas",
+     "tipo": "option",
+     "click_tipo": "int",
+     "opts": [
+      "--musica-pecas"
+     ],
+     "secundarias": [],
+     "obrigatorio": false,
+     "multiplo": false,
+     "padrao": 1,
+     "flag": false,
+     "ajuda": "peças distintas no leito; 1 repete a mesma o capítulo todo"
+    },
+    {
+     "nome": "musica_seg",
+     "tipo": "option",
+     "click_tipo": "float",
+     "opts": [
+      "--musica-seg"
+     ],
+     "secundarias": [],
+     "obrigatorio": false,
+     "multiplo": false,
+     "padrao": null,
+     "flag": false,
+     "ajuda": "duração de cada peça, em s (padrão: 120 no ace, 30 no musicgen)"
+    },
+    {
+     "nome": "musica_peca",
+     "tipo": "option",
+     "click_tipo": "int",
+     "opts": [
+      "--musica-peca"
+     ],
+     "secundarias": [],
+     "obrigatorio": false,
+     "multiplo": false,
+     "padrao": null,
+     "flag": false,
+     "ajuda": "qual peça da paleta usar (padrão: 0 no ace; varia por capítulo no musicgen)"
+    },
+    {
+     "nome": "nome",
+     "tipo": "option",
+     "click_tipo": "str",
+     "opts": [
+      "--nome"
+     ],
+     "secundarias": [],
+     "obrigatorio": false,
+     "multiplo": false,
+     "padrao": null,
+     "flag": false,
+     "ajuda": "nome do MP4 (padrão: o título do projeto)"
+    },
+    {
+     "nome": "janela_imagem",
+     "tipo": "option",
+     "click_tipo": "float",
+     "opts": [
+      "--janela-imagem"
+     ],
+     "secundarias": [],
+     "obrigatorio": false,
+     "multiplo": false,
+     "padrao": 10.0,
+     "flag": false,
+     "ajuda": "preset sincronizado: segundos de narração por imagem"
+    },
+    {
+     "nome": "imagens_candidatas",
+     "tipo": "option",
+     "click_tipo": "int",
+     "opts": [
+      "--imagens-candidatas"
+     ],
+     "secundarias": [],
+     "obrigatorio": false,
+     "multiplo": false,
+     "padrao": 2,
+     "flag": false,
+     "ajuda": "preset sincronizado: candidatos de imagem gerados por janela, antes do QA automático escolher o melhor"
+    },
+    {
+     "nome": "sincronizado_llm",
+     "tipo": "option",
+     "click_tipo": "boolean",
+     "opts": [
+      "--sincronizado-llm"
+     ],
+     "secundarias": [
+      "--sem-sincronizado-llm"
+     ],
+     "obrigatorio": false,
+     "multiplo": false,
+     "padrao": true,
+     "flag": true,
+     "ajuda": "preset sincronizado: usa o Ollama para ler cada janela (desligue em livros de ortografia antiga — taxa de acerto medida perto de zero, e cada tentativa falha paga o timeout inteiro; sem isso cai direto no cenário de reserva, bem mais rápido)"
+    },
+    {
+     "nome": "gpu",
+     "tipo": "option",
+     "click_tipo": "boolean",
+     "opts": [
+      "--gpu"
+     ],
+     "secundarias": [
+      "--cpu"
+     ],
+     "obrigatorio": false,
+     "multiplo": false,
+     "padrao": true,
+     "flag": true,
+     "ajuda": null
+    }
+   ]
+  },
+  "voice": {
+   "ajuda": "Registry de vozes do canal",
+   "parametros": [],
+   "subcomandos": {
+    "check": {
+     "ajuda": "Mede uma gravação e diz se ela serve como referência.",
+     "parametros": [
+      {
+       "nome": "arquivo",
+       "tipo": "argument",
+       "click_tipo": "path",
+       "opts": [
+        "arquivo"
+       ],
+       "secundarias": [],
+       "obrigatorio": true,
+       "multiplo": false,
+       "padrao": null
+      }
+     ]
+    },
+    "list": {
+     "ajuda": "Lista as vozes registradas.",
+     "parametros": []
+    },
+    "new": {
+     "ajuda": "Registra uma voz. Exige consentimento documentado.",
+     "parametros": [
+      {
+       "nome": "voice_id",
+       "tipo": "argument",
+       "click_tipo": "str",
+       "opts": [
+        "voice_id"
+       ],
+       "secundarias": [],
+       "obrigatorio": true,
+       "multiplo": false,
+       "padrao": null
+      },
+      {
+       "nome": "reference",
+       "tipo": "option",
+       "click_tipo": "path",
+       "opts": [
+        "--reference"
+       ],
+       "secundarias": [],
+       "obrigatorio": true,
+       "multiplo": false,
+       "padrao": null,
+       "flag": false,
+       "ajuda": null
+      },
+      {
+       "nome": "quem",
+       "tipo": "option",
+       "click_tipo": "str",
+       "opts": [
+        "--quem"
+       ],
+       "secundarias": [],
+       "obrigatorio": false,
+       "multiplo": false,
+       "padrao": "Moises",
+       "flag": false,
+       "ajuda": "nome no termo de consentimento"
+      },
+      {
+       "nome": "forcar",
+       "tipo": "option",
+       "click_tipo": "boolean",
+       "opts": [
+        "--forcar"
+       ],
+       "secundarias": [],
+       "obrigatorio": false,
+       "multiplo": false,
+       "padrao": false,
+       "flag": true,
+       "ajuda": "registra apesar dos defeitos medidos, que ficam no profile.yaml"
+      }
+     ]
+    },
+    "record": {
+     "ajuda": "Instruções, texto de calibração e — com --saida — a gravação em si.",
+     "parametros": [
+      {
+       "nome": "saida",
+       "tipo": "option",
+       "click_tipo": "path",
+       "opts": [
+        "--saida"
+       ],
+       "secundarias": [],
+       "obrigatorio": false,
+       "multiplo": false,
+       "padrao": null,
+       "flag": false,
+       "ajuda": "WAV a gravar"
+      },
+      {
+       "nome": "segundos",
+       "tipo": "option",
+       "click_tipo": "int",
+       "opts": [
+        "--segundos"
+       ],
+       "secundarias": [],
+       "obrigatorio": false,
+       "multiplo": false,
+       "padrao": 90,
+       "flag": false,
+       "ajuda": "duração da gravação"
+      },
+      {
+       "nome": "dispositivo",
+       "tipo": "option",
+       "click_tipo": "str",
+       "opts": [
+        "--dispositivo"
+       ],
+       "secundarias": [],
+       "obrigatorio": false,
+       "multiplo": false,
+       "padrao": null,
+       "flag": false,
+       "ajuda": "entrada ALSA, ex.: hw:2,0"
+      },
+      {
+       "nome": "listar",
+       "tipo": "option",
+       "click_tipo": "boolean",
+       "opts": [
+        "--listar"
+       ],
+       "secundarias": [],
+       "obrigatorio": false,
+       "multiplo": false,
+       "padrao": false,
+       "flag": true,
+       "ajuda": "só lista as entradas"
+      }
+     ]
+    },
+    "template": {
+     "ajuda": "Cria uma voz template a partir de uma voz do Kokoro (Apache-2.0).\n\nSintetiza uma referência com o Kokoro e a registra como voz de clonagem do\nChatterbox: timbre brasileiro, sem trocar de motor quando a voz própria chegar.\n\n`velocidade` existe porque o Chatterbox clona o ANDAMENTO junto com o timbre:\nreferência apressada rende narração apressada, e nenhum parâmetro de geração\ncorrige isso depois — medido, `cfg_weight` de 0,5 a 0,2 não move as palavras\npor minuto. O lugar de decidir o ritmo é aqui.\n\nVem do Kokoro, e não de esticar o WAV com `atempo`, porque assim não há\nartefato de time-stretch no sinal que condiciona o clone.",
+     "parametros": [
+      {
+       "nome": "voice_id",
+       "tipo": "argument",
+       "click_tipo": "str",
+       "opts": [
+        "voice_id"
+       ],
+       "secundarias": [],
+       "obrigatorio": true,
+       "multiplo": false,
+       "padrao": null
+      },
+      {
+       "nome": "kokoro_voice",
+       "tipo": "option",
+       "click_tipo": "str",
+       "opts": [
+        "--kokoro-voice"
+       ],
+       "secundarias": [],
+       "obrigatorio": false,
+       "multiplo": false,
+       "padrao": "pf_dora",
+       "flag": false,
+       "ajuda": "voz do Kokoro: pf_dora, pm_alex, pm_santa"
+      },
+      {
+       "nome": "segundos",
+       "tipo": "option",
+       "click_tipo": "int",
+       "opts": [
+        "--segundos"
+       ],
+       "secundarias": [],
+       "obrigatorio": false,
+       "multiplo": false,
+       "padrao": 16,
+       "flag": false,
+       "ajuda": "duração da referência"
+      },
+      {
+       "nome": "velocidade",
+       "tipo": "option",
+       "click_tipo": "float",
+       "opts": [
+        "--velocidade"
+       ],
+       "secundarias": [],
+       "obrigatorio": false,
+       "multiplo": false,
+       "padrao": 1.0,
+       "flag": false,
+       "ajuda": "ritmo da referência (0,75 = mais pausado)"
+      }
+     ]
+    },
+    "test": {
+     "ajuda": "Sintetiza o texto de calibração com a voz, para conferência auditiva.",
+     "parametros": [
+      {
+       "nome": "voice_id",
+       "tipo": "argument",
+       "click_tipo": "str",
+       "opts": [
+        "voice_id"
+       ],
+       "secundarias": [],
+       "obrigatorio": true,
+       "multiplo": false,
+       "padrao": null
+      },
+      {
+       "nome": "ptbr_pack",
+       "tipo": "option",
+       "click_tipo": "boolean",
+       "opts": [
+        "--ptbr-pack"
+       ],
+       "secundarias": [
+        "--no-ptbr-pack"
+       ],
+       "obrigatorio": false,
+       "multiplo": false,
+       "padrao": true,
+       "flag": true,
+       "ajuda": null
+      }
+     ]
+    }
+   }
+  },
+  "wikisource": {
+   "ajuda": "Pipeline inteiro a partir de uma obra da Wikisource em português.\n\nUm projeto por página de capítulo (não um projeto-livro com vários\nvídeos): cada capítulo já tem título próprio e vira um vídeo, o mesmo\ndesenho do `sutta`. Dada a URL do índice, descobre e processa todos os\ncapítulos; dada a URL de um capítulo só, processa só esse.\n\nO texto é de domínio público no Brasil — ver `rights:` de cada projeto,\ncolhido da própria página. Ao contrário do `sutta`, não há aviso de\nlicença bloqueando monetização.",
+   "parametros": [
+    {
+     "nome": "url",
+     "tipo": "argument",
+     "click_tipo": "str",
+     "opts": [
+      "url"
+     ],
+     "secundarias": [],
+     "obrigatorio": true,
+     "multiplo": false,
+     "padrao": null
+    },
+    {
+     "nome": "narrator",
+     "tipo": "option",
+     "click_tipo": "str",
+     "opts": [
+      "--narrator"
+     ],
+     "secundarias": [],
+     "obrigatorio": false,
+     "multiplo": false,
+     "padrao": "narrador-v1",
+     "flag": false,
+     "ajuda": "voz do narrador"
+    },
+    {
+     "nome": "elenco",
+     "tipo": "option",
+     "click_tipo": "path",
+     "opts": [
+      "--elenco"
+     ],
+     "secundarias": [],
+     "obrigatorio": false,
+     "multiplo": false,
+     "padrao": null,
+     "flag": false,
+     "ajuda": "YAML personagem->voice_id (sem isso, só narrador+citação genérica)"
+    },
+    {
+     "nome": "ate",
+     "tipo": "option",
+     "click_tipo": "str",
+     "opts": [
+      "--ate"
+     ],
+     "secundarias": [],
+     "obrigatorio": false,
+     "multiplo": false,
+     "padrao": "publicar",
+     "flag": false,
+     "ajuda": "para depois desta etapa: texto, script, audio, video, publicar"
+    },
+    {
+     "nome": "privacidade",
+     "tipo": "option",
+     "click_tipo": "str",
+     "opts": [
+      "--privacidade"
+     ],
+     "secundarias": [],
+     "obrigatorio": false,
+     "multiplo": false,
+     "padrao": "private",
+     "flag": false,
+     "ajuda": "private, unlisted ou public"
+    },
+    {
+     "nome": "tags",
+     "tipo": "option",
+     "click_tipo": "str",
+     "opts": [
+      "--tags"
+     ],
+     "secundarias": [],
+     "obrigatorio": false,
+     "multiplo": false,
+     "padrao": null,
+     "flag": false,
+     "ajuda": "tags separadas por vírgula"
+    },
+    {
+     "nome": "llm",
+     "tipo": "option",
+     "click_tipo": "boolean",
+     "opts": [
+      "--llm"
+     ],
+     "secundarias": [
+      "--no-llm"
+     ],
+     "obrigatorio": false,
+     "multiplo": false,
+     "padrao": true,
+     "flag": true,
+     "ajuda": "Camada 2 do normalizador + atribuição de elenco (Ollama)"
+    },
+    {
+     "nome": "workers",
+     "tipo": "option",
+     "click_tipo": "int",
+     "opts": [
+      "--workers"
+     ],
+     "secundarias": [],
+     "obrigatorio": false,
+     "multiplo": false,
+     "padrao": 1,
+     "flag": false,
+     "ajuda": "processos de síntese na GPU"
+    },
+    {
+     "nome": "free_ollama",
+     "tipo": "option",
+     "click_tipo": "boolean",
+     "opts": [
+      "--free-ollama"
+     ],
+     "secundarias": [],
+     "obrigatorio": false,
+     "multiplo": false,
+     "padrao": false,
+     "flag": true,
+     "ajuda": null
+    },
+    {
+     "nome": "preset",
+     "tipo": "option",
+     "click_tipo": "str",
+     "opts": [
+      "--preset"
+     ],
+     "secundarias": [],
+     "obrigatorio": false,
+     "multiplo": false,
+     "padrao": "slides",
+     "flag": false,
+     "ajuda": "preset visual do vídeo"
+    },
+    {
+     "nome": "musica",
+     "tipo": "option",
+     "click_tipo": "str",
+     "opts": [
+      "--musica"
+     ],
+     "secundarias": [],
+     "obrigatorio": false,
+     "multiplo": false,
+     "padrao": "nenhuma",
+     "flag": false,
+     "ajuda": "trilha: ace, musicgen, gerada, nenhuma ou arquivo — nenhuma paleta existente combina com livro infantil"
+    },
+    {
+     "nome": "slides_dir",
+     "tipo": "option",
+     "click_tipo": "path",
+     "opts": [
+      "--slides-dir"
+     ],
+     "secundarias": [],
+     "obrigatorio": false,
+     "multiplo": false,
+     "padrao": null,
+     "flag": false,
+     "ajuda": "pasta das imagens de fundo (padrão: assets/slides-classicos, não o acervo budista dos suttas)"
+    },
+    {
+     "nome": "slides_seg",
+     "tipo": "option",
+     "click_tipo": "float",
+     "opts": [
+      "--slides-seg"
+     ],
+     "secundarias": [],
+     "obrigatorio": false,
+     "multiplo": false,
+     "padrao": 45.0,
+     "flag": false,
+     "ajuda": null
+    },
+    {
+     "nome": "slides_seed",
+     "tipo": "option",
+     "click_tipo": "int",
+     "opts": [
+      "--slides-seed"
+     ],
+     "secundarias": [],
+     "obrigatorio": false,
+     "multiplo": false,
+     "padrao": null,
+     "flag": false,
+     "ajuda": null
+    },
+    {
+     "nome": "legenda",
+     "tipo": "option",
+     "click_tipo": "boolean",
+     "opts": [
+      "--legenda"
+     ],
+     "secundarias": [
+      "--sem-legenda"
+     ],
+     "obrigatorio": false,
+     "multiplo": false,
+     "padrao": true,
+     "flag": true,
+     "ajuda": null
+    },
+    {
+     "nome": "gpu",
+     "tipo": "option",
+     "click_tipo": "boolean",
+     "opts": [
+      "--gpu"
+     ],
+     "secundarias": [
+      "--cpu"
+     ],
+     "obrigatorio": false,
+     "multiplo": false,
+     "padrao": true,
+     "flag": true,
+     "ajuda": null
+    },
+    {
+     "nome": "token",
+     "tipo": "option",
+     "click_tipo": "path",
+     "opts": [
+      "--token"
+     ],
+     "secundarias": [],
+     "obrigatorio": false,
+     "multiplo": false,
+     "padrao": null,
+     "flag": false,
+     "ajuda": "padrão: config/youtube_token.audiolivros.json"
+    },
+    {
+     "nome": "client_secret",
+     "tipo": "option",
+     "click_tipo": "path",
+     "opts": [
+      "--client-secret"
+     ],
+     "secundarias": [],
+     "obrigatorio": false,
+     "multiplo": false,
+     "padrao": null,
+     "flag": false,
+     "ajuda": null
+    },
+    {
+     "nome": "refazer",
+     "tipo": "option",
+     "click_tipo": "boolean",
+     "opts": [
+      "--refazer"
+     ],
+     "secundarias": [],
+     "obrigatorio": false,
+     "multiplo": false,
+     "padrao": false,
+     "flag": true,
+     "ajuda": null
+    },
+    {
+     "nome": "sim",
+     "tipo": "option",
+     "click_tipo": "boolean",
+     "opts": [
+      "--sim"
+     ],
+     "secundarias": [],
+     "obrigatorio": false,
+     "multiplo": false,
+     "padrao": false,
+     "flag": true,
+     "ajuda": null
+    }
+   ]
+  }
+ }
+}
