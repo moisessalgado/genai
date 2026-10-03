@@ -1,4 +1,4 @@
-# Venv isolada do ACE-Step (runner: src/genai/audio/_ace_runner.py).
+# Venv isolada do ACE-Step (runner: src/genai/video/_ace_runner.py).
 # Congelada de .venv-musica em 2026-10-02. Recriar:
 #   uv venv --python 3.12 ~/ai/envs/musica-ace
 #   uv pip install --python ~/ai/envs/musica-ace/bin/python -r envs/musica-ace.txt

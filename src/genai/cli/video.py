@@ -110,9 +110,9 @@ def _etapa_video(p: Path, cfg: dict, *, preset: str = "slides",
                  sincronizado_llm: bool = True,
                  gpu: bool = True) -> list[Path]:
     """Renderiza um MP4 por master e devolve os arquivos gerados."""
-    from ..audio import musica_ace as ace
-    from ..audio import musica_musicgen as mg
-    from ..audio.musica import TRILHA_LUFS, mixar, preparar_trilha
+    from ..video import musica_ace as ace
+    from ..video import musica_musicgen as mg
+    from ..video.musica import TRILHA_LUFS, mixar, preparar_trilha
     from ..audio.process import duracao
     from ..video import slides as slides_mod
     from ..video import sincronizado as sincronizado_mod
@@ -278,9 +278,9 @@ def musica(paleta: str = typer.Option("contemplativo",
     renderizar uma hora de vídeo.
     """
     if motor == "ace":
-        from ..audio import musica_ace as m
+        from ..video import musica_ace as m
     elif motor == "musicgen":
-        from ..audio import musica_musicgen as m
+        from ..video import musica_musicgen as m
     else:
         console.print(f"[red]motor desconhecido:[/] {motor} — use ace ou musicgen")
         raise typer.Exit(1)

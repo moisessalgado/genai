@@ -9,7 +9,7 @@ import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
-from genai.audio.musica import SAMPLE_RATE, gerar_ambiente
+from genai.video.musica import SAMPLE_RATE, gerar_ambiente
 from genai.video.render import presets, renderizar
 
 # Espectro medido na narração deste canal (2 min do sutta), em % de energia.
