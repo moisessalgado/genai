@@ -10,7 +10,7 @@ Por que ACE-Step e nao outro: os pesos sao **Apache-2.0** (model card
 pesos, e este canal publica. A licenca era a razao original de sintetizar tudo, e
 ela continua satisfeita aqui.
 
-O modelo NAO roda no processo do pipeline: ele vive na `.venv-musica`, atras de
+O modelo NAO roda no processo do pipeline: ele vive na `~/ai/envs/musica-ace`, atras de
 `_ace_runner.py`. Ver o cabecalho daquele arquivo para o motivo.
 """
 from __future__ import annotations

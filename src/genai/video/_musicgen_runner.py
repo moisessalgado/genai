@@ -1,4 +1,4 @@
-"""Ponte para o MusicGen Stereo, executada na venv isolada (`.venv-musica-mg`).
+"""Ponte para o MusicGen Stereo, executada na venv isolada (`~/ai/envs/musica-musicgen`).
 
 Este arquivo NAO e importado pelo pacote. Ele roda como script sob outro
 interpretador -- mesmo motivo do `_ace_runner.py`: o MusicGen tem seu proprio

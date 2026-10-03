@@ -11,7 +11,7 @@ Por que MusicGen e não antes: os pesos são CC-BY-NC-4.0 (Meta AudioCraft), e o
 motivo original para descartá-lo (registrado em LICENSES.md) era o canal
 publicar comercialmente. Não publica -- decisão do operador, 2026-09-01.
 
-O modelo NAO roda no processo do pipeline: vive na `.venv-musica-mg`, atrás de
+O modelo NAO roda no processo do pipeline: vive na `~/ai/envs/musica-musicgen`, atrás de
 `_musicgen_runner.py`. Venv separada da do ACE-Step de propósito: nenhuma razão
 para as duas dependerem da mesma fixação de `transformers`/`torch`, e um erro
 de instalação numa não arrisca quebrar a outra.

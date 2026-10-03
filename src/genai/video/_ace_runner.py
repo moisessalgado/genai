@@ -1,4 +1,4 @@
-"""Ponte para o ACE-Step, executada na venv isolada (`.venv-musica`).
+"""Ponte para o ACE-Step, executada na venv isolada (`~/ai/envs/musica-ace`).
 
 Este arquivo NAO e importado pelo pacote. Ele roda como script sob outro
 interpretador, porque o `acestep` fixa `transformers==4.50` e `datasets==3.4`,
