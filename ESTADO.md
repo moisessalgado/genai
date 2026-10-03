@@ -96,18 +96,22 @@ continuam: são rótulos do contrato com o ai-stack, não caminhos.
   --tools ""`, por subprocesso, numa pasta temporária vazia). Ele não tem chave de API e não
   quer pagar crédito de API, e o login da assinatura só vale dentro do Claude Code: não passa
   pelo LiteLLM. O genai nunca lê nem repassa o token; o filho roda sem `ANTHROPIC_API_KEY`
-  (cobraria na API) e sem `CLAUDE_CODE_OAUTH_TOKEN` (é do openclaw). Sem `claude` no PATH, usa
-  o binário da extensão do VSCode mais nova (`claude_bin`).
+  (cobraria na API) e sem `CLAUDE_CODE_OAUTH_TOKEN` (é do openclaw). Usa o `claude` do PATH
+  (instalação nativa em `~/.local/bin`, que se atualiza sozinha); com PATH reduzido,
+  `~/.local/bin/claude`, e por último o binário da extensão do VSCode mais nova (`claude_bin`).
 - **Reserva:** binário ausente, timeout, limite de uso ou etapa que não converge em 3
   tentativas → aviso `!!! roteiro: o Claude (claude -p) falhou` e o resto do roteiro segue no
   `genai-local`. A franquia divide as janelas de ~5 h com o Claude Code interativo e o
   openclaw: para lote, `genai hq roteiro --backend litellm` (ou `roteiro_backend = "litellm"`).
 - Medido (A Raposa e as Uvas, 1 página): Claude 18 s, 7 quadros, falas fiéis à fonte;
-  reserva forçada no genai-local 150 s, 5 quadros.
+  reserva forçada no genai-local 150 s, 5 quadros. Com o raciocínio do gemma4 ligado, a reserva
+  chegou a falhar (conteúdo vazio, `max_tokens` gasto pensando); desde o `reasoning_effort: none`
+  na rota `genai-local` (ai-stack 5227c09), 16 s, 6 quadros.
 - A rota `genai-roteiro` (Sonnet pela API) existe no LiteLLM mas fica dormente, sem chave; o
   genai não aponta para ela.
 - Chave: virtual key `genai` do LiteLLM (`max_budget` 20) em **`config/litellm.chave`**
-  (600, fora do git); `$VF_LLM_CHAVE` vence o arquivo.
+  (600, fora do git); `$GENAI_LLM_CHAVE` vence o arquivo
+  (`$VF_LLM_CHAVE`, o nome antigo, ainda vale, com aviso de obsoleta).
 - A primeira falha de conexão do processo imprime **`!!! LLM indisponível em ...`** em
   stderr (com a dica da chave em 401/403): as camadas do audiolivro seguem sem o LLM e
   antes não diziam nada.

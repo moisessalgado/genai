@@ -27,6 +27,6 @@
 # hq_llm_modelo = "genai-local"             # reserva do roteiro da HQ quando o Claude falha
 # roteiro_backend = "claude"                # claude -p da assinatura; "litellm" = só o local
 # claude_modelo   = "sonnet"
-# claude_bin      = "claude"                # fora do PATH: o binário da extensão do VSCode
-# Chave do LiteLLM: $VF_LLM_CHAVE ou o arquivo config/litellm.chave (fora do git).
+# claude_bin      = "claude"                # fora do PATH: ~/.local/bin/claude, depois a extensão do VSCode
+# Chave do LiteLLM: $GENAI_LLM_CHAVE ou o arquivo config/litellm.chave (fora do git).
 # invokeai_url = "http://127.0.0.1:9090"

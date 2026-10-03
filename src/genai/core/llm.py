@@ -3,7 +3,7 @@
 Dois dialetos, escolhidos por `llm_api` na configuração central:
 
 - `openai` (padrão): API compatível com a OpenAI (`/v1/chat/completions`), que
-  é o que o LiteLLM do ai-stack (`:4000`) fala. A chave vem de `VF_LLM_CHAVE`
+  é o que o LiteLLM do ai-stack (`:4000`) fala. A chave vem de `GENAI_LLM_CHAVE`
   no ambiente ou, sem ela, do arquivo `config/litellm.chave` (fora do git) —
   não é campo do Settings para o `doctor` não imprimi-la;
 - `ollama`: API nativa do Ollama (`/api/generate`) em `llm_url`.
@@ -35,10 +35,17 @@ MODELO_PADRAO = settings().llm_modelo
 ARQUIVO_CHAVE = settings().config_dir / "litellm.chave"
 
 _avisado = False
+_avisado_chave = False
 
 
 def _chave() -> str | None:
-    if os.environ.get("VF_LLM_CHAVE"):
+    if os.environ.get("GENAI_LLM_CHAVE"):
+        return os.environ["GENAI_LLM_CHAVE"]
+    if os.environ.get("VF_LLM_CHAVE"):  # nome antigo, só por transição
+        global _avisado_chave
+        if not _avisado_chave:
+            _avisado_chave = True
+            print("aviso: VF_LLM_CHAVE está obsoleta; use GENAI_LLM_CHAVE.", file=sys.stderr)
         return os.environ["VF_LLM_CHAVE"]
     try:
         return ARQUIVO_CHAVE.read_text(encoding="utf-8").strip() or None
@@ -60,7 +67,7 @@ def _avisar(url: str, e: Exception) -> None:
         except Exception:
             corpo = ""
         detalhe = f"HTTP {e.code} {e.reason} {corpo}".strip()
-    dica = (" (chave do LiteLLM ausente ou recusada: VF_LLM_CHAVE ou "
+    dica = (" (chave do LiteLLM ausente ou recusada: GENAI_LLM_CHAVE ou "
             f"{ARQUIVO_CHAVE})" if isinstance(e, error.HTTPError) and e.code in (401, 403)
             else "")
     print(f"\n!!! LLM indisponível em {url}: {detalhe}{dica}.\n"

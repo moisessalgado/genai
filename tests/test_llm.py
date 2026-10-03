@@ -85,7 +85,7 @@ def test_dialeto_openai_fala_chat_completions_com_chave(monkeypatch):
         return _Resp(json.dumps({"choices": [{"message": {"content": '{"a": 1}'}}]}).encode())
 
     monkeypatch.setattr(llm, "API", "openai")
-    monkeypatch.setenv("VF_LLM_CHAVE", "sk-teste")
+    monkeypatch.setenv("GENAI_LLM_CHAVE", "sk-teste")
     monkeypatch.setattr(llm.request, "urlopen", urlopen)
     assert llm.gerar_json("p", {"type": "object"}, num_predict=700,
                           url="http://x:4000/v1/chat/completions") == {"a": 1}
@@ -106,6 +106,7 @@ def test_chave_do_arquivo_quando_nao_ha_variavel(monkeypatch, tmp_path):
         return _Resp(json.dumps({"choices": [{"message": {"content": "ok"}}]}).encode())
 
     monkeypatch.setattr(llm, "API", "openai")
+    monkeypatch.delenv("GENAI_LLM_CHAVE", raising=False)
     monkeypatch.delenv("VF_LLM_CHAVE", raising=False)
     monkeypatch.setattr(llm, "ARQUIVO_CHAVE", arq)
     monkeypatch.setattr(llm.request, "urlopen", urlopen)
@@ -127,3 +128,12 @@ def test_llm_fora_avisa_uma_vez_e_o_erro_sobe(monkeypatch, capsys):
             llm.gerar("p", url="http://fora:4000/x")
     err = capsys.readouterr().err
     assert err.count("LLM indisponível em http://fora:4000/x") == 1
+
+
+def test_nome_antigo_da_chave_ainda_vale_com_aviso(monkeypatch, capsys):
+    monkeypatch.delenv("GENAI_LLM_CHAVE", raising=False)
+    monkeypatch.setenv("VF_LLM_CHAVE", "sk-antiga")
+    monkeypatch.setattr(llm, "_avisado_chave", False)
+    assert llm._chave() == "sk-antiga"
+    assert llm._chave() == "sk-antiga"
+    assert capsys.readouterr().err.count("GENAI_LLM_CHAVE") == 1

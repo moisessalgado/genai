@@ -84,3 +84,16 @@ def test_extensao_do_vscode_mais_nova(tmp_path, monkeypatch):
     monkeypatch.setattr(claude_cli.Path, "home", lambda: tmp_path)
     monkeypatch.setattr(claude_cli.shutil, "which", lambda x: None)
     assert "2.1.288" in claude_cli.binario()
+
+
+def test_fora_do_path_prefere_a_instalacao_nativa(tmp_path, monkeypatch):
+    nativo = tmp_path / ".local/bin/claude"
+    nativo.parent.mkdir(parents=True)
+    nativo.write_text("")
+    nativo.chmod(0o755)
+    b = tmp_path / ".vscode/extensions/anthropic.claude-code-2.1.288-linux-x64/resources/native-binary/claude"
+    b.parent.mkdir(parents=True)
+    b.write_text("")
+    monkeypatch.setattr(claude_cli.Path, "home", lambda: tmp_path)
+    monkeypatch.setattr(claude_cli.shutil, "which", lambda x: None)
+    assert claude_cli.binario() == str(nativo)

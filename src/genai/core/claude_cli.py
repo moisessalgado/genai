@@ -26,7 +26,10 @@ from pathlib import Path
 
 from .config import settings
 
-# O binário que a extensão do VSCode instala, quando não há `claude` no PATH.
+# Sem `claude` no PATH (serviço com PATH reduzido): a instalação nativa, que se
+# atualiza sozinha, e por último o binário da extensão do VSCode, cujo caminho
+# muda a cada versão.
+_NATIVO = "~/.local/bin/claude"
 _EXTENSOES = "~/.vscode/extensions/anthropic.claude-code-*/resources/native-binary/claude"
 _SEM = ("ANTHROPIC_API_KEY", "ANTHROPIC_AUTH_TOKEN", "CLAUDE_CODE_OAUTH_TOKEN")
 SISTEMA = ("You are a careful comic-script writer. Answer only through the structured "
@@ -44,12 +47,15 @@ def _versao(p: Path) -> tuple[int, ...]:
 
 def binario() -> str | None:
     """`claude_bin` da configuração (nome no PATH ou caminho); sem ele no PATH,
-    o binário da extensão do VSCode mais nova."""
+    `~/.local/bin/claude` e, por último, o binário da extensão do VSCode mais nova."""
     alvo = settings().claude_bin
     if achado := shutil.which(os.path.expanduser(alvo)):
         return achado
     if alvo != "claude":
         return None
+    nativo = Path.home() / _NATIVO.removeprefix("~/")
+    if os.access(nativo, os.X_OK):
+        return str(nativo)
     candidatos = sorted(Path.home().glob(_EXTENSOES.removeprefix("~/")), key=_versao)
     return str(candidatos[-1]) if candidatos else None
 
