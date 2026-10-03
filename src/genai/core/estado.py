@@ -49,12 +49,21 @@ CREATE TABLE IF NOT EXISTS runs (
 STATES = ("pending", "running", "ok", "needs_review")
 
 
+def conectar(path: Path) -> sqlite3.Connection:
+    """Conexao com o state.db de um projeto, do jeito que todas as areas usam.
+
+    Um arquivo so por projeto, com tabelas por area: os `chunks` do audiolivro
+    e as `hq_*` da HQ convivem (o motion comic narra a HQ pelo audiolivro)."""
+    conn = sqlite3.connect(path, timeout=30)
+    conn.row_factory = sqlite3.Row
+    conn.execute("PRAGMA journal_mode=WAL")
+    return conn
+
+
 class Store:
     def __init__(self, path: Path):
         self.path = path
-        self.conn = sqlite3.connect(path, timeout=30)
-        self.conn.row_factory = sqlite3.Row
-        self.conn.execute("PRAGMA journal_mode=WAL")
+        self.conn = conectar(path)
         self.conn.executescript(SCHEMA)
         # migracao para bancos criados antes da checagem de identidade de voz
         cols = {r[1] for r in self.conn.execute("PRAGMA table_info(chunks)")}
