@@ -65,5 +65,5 @@ def test_preset_desconhecido_e_recusado(tmp_path):
 
 
 def test_presets_declarados():
-    assert set(presets()) == {"slides", "ondas", "espectro", "estatico",
-                              "gradiente"}
+    assert set(presets()) == {"slides", "sincronizado", "ondas", "espectro",
+                              "estatico", "gradiente"}

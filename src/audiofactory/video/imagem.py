@@ -19,6 +19,7 @@ from __future__ import annotations
 import hashlib
 import json
 import subprocess
+import tempfile
 from pathlib import Path
 
 from ..project import RAIZ
@@ -94,12 +95,18 @@ def _seed(prompt: str, i: int) -> int:
 def gerar(prompt: str, modelo: str = "flux", n: int = 4,
           largura: int = LARGURA_PADRAO, altura: int = ALTURA_PADRAO,
           passos: int | None = None, guidance: float | None = None,
+          negative: str | None = None,
           progresso=None) -> list[Path]:
     """Gera (ou reaproveita) `n` candidatos para `prompt`, em `CACHE`.
 
     O nome do arquivo carrega o hash do prompt e a seed: reescrever o prompt
     não reaproveita silenciosamente um arquivo antigo com o nome antigo — a
     mesma armadilha já documentada em `musica_ace.gerar_pecas`.
+
+    `negative` só tem efeito nos modelos "sd"/"sd:large" (CFG de verdade,
+    guidance > 0) — FLUX-schnell não faz CFG (`guidance=0`), então um
+    negative_prompt aí seria só decoração; o runner descarta silenciosamente
+    nesse caso.
     """
     if not disponivel():
         raise RuntimeError(
@@ -116,7 +123,8 @@ def gerar(prompt: str, modelo: str = "flux", n: int = 4,
     destinos = [CACHE / f"{prefixo}-{marca}-{_seed(prompt, i)}.png" for i in range(n)]
 
     pendentes = [{"prompt": prompt, "seed": _seed(prompt, i), "destino": str(destinos[i]),
-                  "largura": largura, "altura": altura, "passos": passos, "guidance": guidance}
+                  "largura": largura, "altura": altura, "passos": passos, "guidance": guidance,
+                  "negative_prompt": negative}
                  for i in range(n) if not destinos[i].exists()]
     if pendentes:
         if progresso:
@@ -125,14 +133,37 @@ def gerar(prompt: str, modelo: str = "flux", n: int = 4,
     return destinos
 
 
-def _rodar(pedidos: list[dict], modelo_repo: str, familia: str) -> None:
+def _rodar(pedidos: list[dict], modelo_repo: str, familia: str,
+          avaliar_clip: bool = False, avaliar_estilo: bool = False
+          ) -> tuple[dict[str, float], dict[str, float]]:
+    """Roda o lote inteiro numa unica invocacao da venv isolada — o modelo
+    carrega uma vez so, nao uma vez por prompt. `avaliar_clip` pede uma nota
+    de similaridade texto-imagem por pedido (usada so para desempate entre
+    candidatos da mesma janela, ver `video/sincronizado.py`); `avaliar_estilo`
+    pede a nota foto-vs-ilustracao usada para rejeitar candidatos
+    fotorrealistas demais (`imagem_qa.eh_fotorealista`). Devolve
+    `(notas_relevancia, notas_estilo)`, cada uma vazia se nao pedida."""
     pedido = {"pedidos": pedidos, "modelo_repo": modelo_repo, "familia": familia,
-              "hf_home": str(RAIZ / "models")}
+              "hf_home": str(RAIZ / "models"), "avaliar_clip": avaliar_clip,
+              "avaliar_estilo": avaliar_estilo}
     runner = Path(__file__).with_name("_imagem_runner.py")
-    r = subprocess.run([str(VENV / "bin" / "python"), str(runner), json.dumps(pedido)],
-                       capture_output=True, text=True)
+    with tempfile.NamedTemporaryFile("w", suffix=".json", delete=False,
+                                     encoding="utf-8") as tf:
+        json.dump(pedido, tf)
+        arquivo_pedido = Path(tf.name)
+    try:
+        r = subprocess.run([str(VENV / "bin" / "python"), str(runner), str(arquivo_pedido)],
+                           capture_output=True, text=True)
+    finally:
+        arquivo_pedido.unlink(missing_ok=True)
     if r.returncode != 0:
         raise RuntimeError(f"geração de imagem falhou:\n{r.stderr[-2000:]}")
+    for linha in reversed(r.stdout.splitlines()):
+        linha = linha.strip()
+        if linha.startswith("{"):
+            saida = json.loads(linha)
+            return saida.get("scores", {}), saida.get("estilos", {})
+    return {}, {}
 
 
 def aprovar(arquivos: list[Path], slides_dir: Path = ACERVO) -> list[Path]:

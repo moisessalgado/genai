@@ -366,7 +366,7 @@ def _nome_de_arquivo(titulo: str) -> str:
 @app.command()
 def video(ctx: typer.Context, slug: str,
           preset: str = typer.Option("slides",
-              help="slides, ondas, espectro, estatico ou gradiente"),
+              help="slides, sincronizado, ondas, espectro, estatico ou gradiente"),
           musica: str = typer.Option("ace",
               help="'ace' ou 'musicgen' (modelos dedicados; 'ace:sobrio' / "
                    "'musicgen:sobrio' escolhem a paleta), 'gerada' (sintetizada), "
@@ -390,6 +390,18 @@ def video(ctx: typer.Context, slug: str,
                    "capítulo no musicgen)"),
           nome: str = typer.Option(None,
               help="nome do MP4 (padrão: o título do projeto)"),
+          janela_imagem: float = typer.Option(10.0,
+              help="preset sincronizado: segundos de narração por imagem"),
+          imagens_candidatas: int = typer.Option(2,
+              help="preset sincronizado: candidatos de imagem gerados por "
+                   "janela, antes do QA automático escolher o melhor"),
+          sincronizado_llm: bool = typer.Option(True,
+              "--sincronizado-llm/--sem-sincronizado-llm",
+              help="preset sincronizado: usa o Ollama para ler cada janela "
+                   "(desligue em livros de ortografia antiga — taxa de acerto "
+                   "medida perto de zero, e cada tentativa falha paga o "
+                   "timeout inteiro; sem isso cai direto no cenário de "
+                   "reserva, bem mais rápido)"),
           gpu: bool = typer.Option(True, "--gpu/--cpu")):
     """Gera o MP4 para o YouTube, com trilha opcional sob a narração."""
     p = _proj(slug)
@@ -399,7 +411,9 @@ def video(ctx: typer.Context, slug: str,
                  capa=capa, slides_dir=slides_dir, slides_seg=slides_seg,
                  slides_seed=slides_seed, trilha_lufs=trilha_lufs, legenda=legenda,
                  musica_pecas=musica_pecas, musica_seg=musica_seg,
-                 musica_peca=musica_peca, nome=nome, gpu=gpu)
+                 musica_peca=musica_peca, nome=nome,
+                 janela_imagem=janela_imagem, imagens_candidatas=imagens_candidatas,
+                 sincronizado_llm=sincronizado_llm, gpu=gpu)
 
 
 def _indice_capitulo(chave: str) -> int:
@@ -421,6 +435,8 @@ def _etapa_video(p: Path, cfg: dict, *, preset: str = "slides",
                  trilha_lufs: float | None = None, legenda: bool = True,
                  musica_pecas: int = 1, musica_seg: float | None = None,
                  musica_peca: int | None = None, nome: str | None = None,
+                 janela_imagem: float = 10.0, imagens_candidatas: int = 2,
+                 sincronizado_llm: bool = True,
                  gpu: bool = True) -> list[Path]:
     """Renderiza um MP4 por master e devolve os arquivos gerados."""
     from ..audio import musica_ace as ace
@@ -428,6 +444,7 @@ def _etapa_video(p: Path, cfg: dict, *, preset: str = "slides",
     from ..audio.musica import TRILHA_LUFS, mixar, preparar_trilha
     from ..audio.process import duracao
     from ..video import slides as slides_mod
+    from ..video import sincronizado as sincronizado_mod
     from ..video.render import presets, renderizar
     # A trilha vem ligada de fábrica porque o canal publica com ela; o vídeo mudo
     # era uma opção que o operador tinha de lembrar de pedir, e o resultado foi
@@ -453,6 +470,12 @@ def _etapa_video(p: Path, cfg: dict, *, preset: str = "slides",
                           "outro preset")
             raise typer.Exit(1)
         console.print(f"[dim]acervo de slides: {len(acervo)} imagens em {pasta}[/]")
+    if preset == "sincronizado" and capa is None:
+        from ..video import imagem as imagem_mod
+        if not imagem_mod.disponivel():
+            console.print(f"[red]venv de imagem ausente:[/] {imagem_mod.VENV} — "
+                          "preset sincronizado precisa gerar imagem")
+            raise typer.Exit(1)
 
     # Resolve o modo da trilha uma vez, antes do laço: um erro de paleta ou um
     # arquivo inexistente tem de aparecer agora, e não depois de renderizar
@@ -543,11 +566,28 @@ def _etapa_video(p: Path, cfg: dict, *, preset: str = "slides",
         if legenda and not srt.exists():
             console.print(f"[yellow]sem legenda:[/] {srt.name} não existe — "
                           "rode `build` de novo para gerá-la")
+
+        sincronizado_plano = None
+        if preset == "sincronizado" and capa is None:
+            if not srt.exists():
+                console.print(f"[red]sem legenda:[/] {srt} não existe — preset "
+                              "sincronizado precisa dela para saber o que narrar "
+                              "em cada janela (rode `build` de novo)")
+                raise typer.Exit(1)
+            destino_imgs = (p / "cache" / "imagens-sincronizadas" /
+                           master.stem.replace("-master", ""))
+            with console.status("gerando imagens sincronizadas (Ollama + FLUX)…") as st:
+                sincronizado_plano = sincronizado_mod.plano(
+                    srt, destino_imgs, duracao(audio),
+                    janela_s=janela_imagem, n_candidatos=imagens_candidatas,
+                    usar_llm=sincronizado_llm, progresso=lambda m: st.update(m))
+
         with console.status(f"renderizando {destino.name}…"):
             renderizar(audio, destino, preset=preset, capa=capa, gpu=gpu,
                        legenda=srt if (legenda and srt.exists()) else None,
                        slides_dir=slides_dir, slides_seg=slides_seg,
-                       slides_seed=slides_seed)
+                       slides_seed=slides_seed,
+                       sincronizado_plano=sincronizado_plano)
         console.print(f"[green]{destino}[/] ({destino.stat().st_size/1e6:.0f} MB)")
         gerados.append(destino)
 
@@ -1241,7 +1281,9 @@ def imagem(prompt: str = typer.Argument(None, help="prompt livre"),
           largura: int = typer.Option(None, help="padrão: 1344 (~16:9)"),
           altura: int = typer.Option(None, help="padrão: 768 (~16:9)"),
           passos: int = typer.Option(None, help="padrão depende do modelo"),
-          guidance: float = typer.Option(None, help="padrão depende do modelo")):
+          guidance: float = typer.Option(None, help="padrão depende do modelo"),
+          negativo: str = typer.Option(None,
+              help="negative prompt — só tem efeito com --modelo sd/sd:large")):
     """Gera candidatos em cache/imagens/, para revisar antes de `imagem-aprovar`.
 
     Não escreve direto no acervo: nem toda imagem gerada presta, e curadoria é
@@ -1263,7 +1305,8 @@ def imagem(prompt: str = typer.Argument(None, help="prompt livre"),
 
     prompts = ([prompt] if prompt is not None else
                [l.strip() for l in arquivo.read_text(encoding="utf-8").splitlines() if l.strip()])
-    kwargs = {"modelo": modelo, "n": n, "passos": passos, "guidance": guidance}
+    kwargs = {"modelo": modelo, "n": n, "passos": passos, "guidance": guidance,
+              "negative": negativo}
     if largura is not None:
         kwargs["largura"] = largura
     if altura is not None:

@@ -162,19 +162,34 @@ def veu_lavfi(fps: int, largura: int) -> str:
             f"trim=end_frame=1,loop=loop=-1:size=1:start=0,setpts=N/{fps}/TB")
 
 
-def entradas(imagens: list[Path], cada: float, fps: int, largura: int,
-             veu: bool) -> list[str]:
-    """Argumentos de entrada do ffmpeg: um bloco por imagem, mais o veu."""
+def _duracoes(cada: float | list[float], n: int) -> list[float]:
+    """Normaliza `cada` (um numero, do preset `slides`, ou uma duracao por
+    imagem, do preset `sincronizado`) para uma lista do tamanho certo."""
+    if isinstance(cada, (int, float)):
+        return [float(cada)] * n
+    if len(cada) != n:
+        raise ValueError(f"{len(cada)} duracoes para {n} imagens")
+    return list(cada)
+
+
+def entradas(imagens: list[Path], cada: float | list[float], fps: int,
+             largura: int, veu: bool) -> list[str]:
+    """Argumentos de entrada do ffmpeg: um bloco por imagem, mais o veu.
+
+    `cada` aceita um numero unico (todas as imagens com a mesma duracao, uso
+    do preset `slides`) ou uma duracao por imagem (preset `sincronizado`,
+    onde cada janela de narracao tem um tamanho diferente)."""
+    duracoes = _duracoes(cada, len(imagens))
     args: list[str] = []
-    for img in imagens:
-        args += ["-loop", "1", "-framerate", str(fps), "-t", f"{cada:.3f}",
+    for img, d in zip(imagens, duracoes):
+        args += ["-loop", "1", "-framerate", str(fps), "-t", f"{d:.3f}",
                  "-i", str(img)]
     if veu:
         args += ["-f", "lavfi", "-i", veu_lavfi(fps, largura)]
     return args
 
 
-def filtro(imagens: list[Path], cada: float, cruzamento: float,
+def filtro(imagens: list[Path], cada: float | list[float], cruzamento: float,
            largura: int, altura: int, veu: bool) -> str:
     """Grafo que normaliza cada imagem e as encadeia por dissolve, saindo em [v].
 
@@ -197,6 +212,7 @@ def filtro(imagens: list[Path], cada: float, cruzamento: float,
     codec. Em 10 bits ha degraus de sobra, e o `render` os despeja em 8 com
     difusao de erro no fim da cadeia.
     """
+    duracoes = _duracoes(cada, len(imagens))
     partes: list[str] = []
     for i in range(len(imagens)):
         partes.append(
@@ -209,11 +225,14 @@ def filtro(imagens: list[Path], cada: float, cruzamento: float,
             f"format={PROFUNDIDADE}[g{i}];"
             f"[b{i}][g{i}]overlay=(W-w)/2:(H-h)/2:format=auto,setsar=1[s{i}]")
     anterior = "[s0]"
+    acumulado = 0.0
     for k in range(1, len(imagens)):
+        acumulado += duracoes[k - 1]
+        offset = acumulado - k * cruzamento
         saida = f"[x{k}]"
         partes.append(f"{anterior}[s{k}]xfade=transition=fade:"
                       f"duration={cruzamento:.3f}:"
-                      f"offset={k * (cada - cruzamento):.3f}{saida}")
+                      f"offset={offset:.3f}{saida}")
         anterior = saida
     if veu:
         # O veu entra UMA vez, depois do encadeado: aplicado por imagem, cada

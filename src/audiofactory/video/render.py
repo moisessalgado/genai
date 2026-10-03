@@ -11,10 +11,27 @@ nao esta olhando para a tela, e quando olha, precisa achar a tela em repouso.
 from __future__ import annotations
 
 import subprocess
+import tempfile
 from pathlib import Path
 
 from ..audio.process import duracao
 from . import slides as slides_mod
+from . import sincronizado as sincronizado_mod
+
+# Acima disto, um `-filter_complex` so com scale+blur+overlay+xfade por imagem
+# estoura RAM: medido no piloto do preset `sincronizado` (234 imagens), o
+# ffmpeg foi morto pelo OOM killer do sistema com ~48 GB de RSS (kernel log:
+# "Out of memory: Killed process ... ffmpeg ... anon-rss:50450564kB"). O grafo
+# inteiro fica vivo na memoria de uma vez so; passar de ~20-30 ramos e o que
+# fez a diferenca entre alguns GB e travar a maquina. Acima do teto,
+# `renderizar` particiona em lotes silenciosos, concatena por stream-copy
+# (barato) e só entao muxa audio+legenda num passo final simples.
+#
+# 12, nao 24: esta maquina roda outros processos ao mesmo tempo (outro agente
+# em outro projeto, editor, etc.) — a mesma RAM nao e so desta renderizacao, e
+# o teto medido (48 GB para 234 imagens, ~200 MB/imagem) ja e folga curta
+# perto dos 59 GB totais quando dividida com vizinhos imprevisiveis.
+LOTE_MAXIMO = 12
 
 # 1080p a 25 fps: o YouTube reencoda tudo, e mais resolucao so aumenta o upload.
 LARGURA, ALTURA, FPS = 1920, 1080, 25
@@ -64,16 +81,16 @@ COR_ONDA = "0x7ec8e3"
 
 
 def presets() -> list[str]:
-    return ["slides", "ondas", "espectro", "estatico", "gradiente"]
+    return ["slides", "sincronizado", "ondas", "espectro", "estatico", "gradiente"]
 
 
 def _fundo(preset: str, capa: Path | None,
-           plano: tuple[list[Path], float, float] | None,
+           plano: tuple[list[Path], float | list[float], float] | None,
            veu: bool) -> list[str]:
     """Entradas de video do ffmpeg. O audio entra depois delas."""
     if capa is not None:
         return ["-loop", "1", "-framerate", str(FPS), "-i", str(capa)]
-    if preset == "slides":
+    if preset in ("slides", "sincronizado"):
         imagens, cada, _ = plano
         return slides_mod.entradas(imagens, cada, FPS, LARGURA, veu)
     if preset == "estatico":
@@ -99,7 +116,7 @@ def _sobreposicao(preset: str, capa: Path | None, i_audio: int,
     `i_audio` nao e fixo: o preset `slides` abre uma entrada por imagem, e o
     audio passa a ser a ultima delas.
     """
-    if preset == "slides" and capa is None:
+    if preset in ("slides", "sincronizado") and capa is None:
         imagens, cada, cruzamento = plano
         return slides_mod.filtro(imagens, cada, cruzamento, LARGURA, ALTURA, veu)
     if preset in ("estatico", "gradiente"):
@@ -152,12 +169,19 @@ def renderizar(audio: Path, destino: Path, preset: str = "slides",
                legenda: Path | None = None,
                slides_dir: Path | None = None,
                slides_seg: float = slides_mod.SEGUNDOS_POR_IMAGEM,
-               slides_seed: int | None = None) -> Path:
+               slides_seed: int | None = None,
+               sincronizado_plano: tuple[list[Path], list[float], float] | None = None
+               ) -> Path:
     """Gera o MP4 a partir do audio. `capa` sobrepoe o fundo gerado.
 
     No preset `slides` o numero de imagens sai da duracao do audio, e quais
     imagens sao sorteadas do acervo -- diferentes a cada render, a menos que
     `slides_seed` fixe o sorteio.
+
+    No preset `sincronizado` a geracao de imagem (LLM + FLUX em lote) e cara
+    demais para acontecer aqui dentro a cada chamada -- `sincronizado_plano`
+    chega PRONTO de `sincronizado.plano()`, chamado uma vez por quem orquestra
+    (`cli/main.py`), e `renderizar` so monta o ffmpeg em cima dele.
     """
     if preset not in presets():
         raise ValueError(f"preset desconhecido: {preset} (use {presets()})")
@@ -166,6 +190,12 @@ def renderizar(audio: Path, destino: Path, preset: str = "slides",
         plano = slides_mod.plano(
             duracao(audio), slides_dir or slides_mod.DIRETORIO_PADRAO,
             segundos_por_imagem=slides_seg, seed=slides_seed)
+    elif preset == "sincronizado" and capa is None:
+        if sincronizado_plano is None:
+            raise ValueError(
+                "preset sincronizado precisa de sincronizado_plano — "
+                "chame video/sincronizado.py::plano() antes de renderizar")
+        plano = sincronizado_plano
     # O veu so existe para dar contraste a legenda; sem legenda ele seria um
     # escurecimento sem motivo no rodape da arte.
     veu = legenda is not None
@@ -189,6 +219,13 @@ def renderizar(audio: Path, destino: Path, preset: str = "slides",
     # os 10 bits existem para dar.
     filtro = filtro.replace("[v]", "[v10]") + f";[v10]{SAIDA_8BITS}[v]"
 
+    imagens_plano = plano[0] if preset in ("slides", "sincronizado") and capa is None else None
+    if imagens_plano is not None and len(imagens_plano) > LOTE_MAXIMO:
+        # Grafo unico com tudo (scale+blur+overlay+xfade por imagem) e o que
+        # estourou RAM — ver LOTE_MAXIMO. Particiona em vez de montar tudo de
+        # uma vez.
+        return _renderizar_em_lotes(plano, audio, destino, gpu, legenda, veu)
+
     video = NVENC if gpu else X264
     destino.parent.mkdir(parents=True, exist_ok=True)
     subprocess.run(
@@ -201,4 +238,81 @@ def renderizar(audio: Path, destino: Path, preset: str = "slides",
          "-movflags", "+faststart",
          "-c:a", "aac", "-b:a", "192k", "-shortest", str(destino)],
         capture_output=True, text=True, check=True)
+    return destino
+
+
+def _renderizar_segmento_silencioso(imagens: list[Path], duracoes: list[float],
+                                    cruzamento: float, destino: Path, gpu: bool) -> Path:
+    """Um lote de imagens encadeadas, sem audio e sem legenda — so o video."""
+    entrada = slides_mod.entradas(imagens, duracoes, FPS, LARGURA, veu=False)
+    filtro = slides_mod.filtro(imagens, duracoes, cruzamento, LARGURA, ALTURA, veu=False)
+    filtro = filtro.replace("[v]", "[v10]") + f";[v10]{SAIDA_8BITS}[v]"
+    video = NVENC if gpu else X264
+    subprocess.run(
+        ["ffmpeg", "-hide_banner", "-loglevel", "error", "-y",
+         *entrada, "-filter_complex", filtro, "-map", "[v]",
+         *video, *CORES, "-pix_fmt", "yuv420p", "-an", str(destino)],
+        capture_output=True, text=True, check=True)
+    return destino
+
+
+def _renderizar_em_lotes(plano: tuple[list[Path], list[float], float], audio: Path,
+                         destino: Path, gpu: bool, legenda: Path | None,
+                         veu: bool) -> Path:
+    """Video longo (muitas imagens) em pedacos pequenos de memoria limitada,
+    concatenados por stream-copy (barato), e so entao casados com o audio e a
+    legenda num passo final — esse ultimo passo nao tem scale/blur/xfade
+    nenhum, entao nao volta a estourar RAM nem em video de horas.
+
+    Cada lote perde o veu (so faz sentido junto da legenda, que so entra no
+    passo final) — sem isso o rodape escureceria duas vezes na emenda.
+    """
+    imagens, duracoes, cruzamento = plano
+    with tempfile.TemporaryDirectory(prefix="render-lotes-") as tmp:
+        tmp_dir = Path(tmp)
+        segmentos: list[Path] = []
+        for i in range(0, len(imagens), LOTE_MAXIMO):
+            fatia_imgs = imagens[i:i + LOTE_MAXIMO]
+            fatia_dur = duracoes[i:i + LOTE_MAXIMO]
+            seg = tmp_dir / f"lote-{i // LOTE_MAXIMO:04d}.mp4"
+            _renderizar_segmento_silencioso(fatia_imgs, fatia_dur, cruzamento, seg, gpu)
+            segmentos.append(seg)
+
+        concat_txt = tmp_dir / "concat.txt"
+        concat_txt.write_text(
+            "".join(f"file '{s.resolve()}'\n" for s in segmentos), encoding="utf-8")
+        video_concatenado = tmp_dir / "concatenado.mp4"
+        subprocess.run(
+            ["ffmpeg", "-hide_banner", "-loglevel", "error", "-y",
+             "-f", "concat", "-safe", "0", "-i", str(concat_txt),
+             "-c", "copy", str(video_concatenado)],
+            capture_output=True, text=True, check=True)
+
+        # Passo final: so casa video (ja pronto) + audio real + legenda queimada
+        # (com o veu, se pedido) — grafo trivial, sem risco de OOM.
+        filtro_final = "[0:v]null[v]"
+        entradas_extra: list[str] = []
+        n_seguinte = 1
+        if veu and legenda is not None:
+            entradas_extra += ["-f", "lavfi", "-i", slides_mod.veu_lavfi(FPS, LARGURA)]
+            filtro_final = (f"[0:v][{n_seguinte}:v]"
+                            f"overlay=0:{ALTURA - slides_mod.VEU_ALTURA}:format=auto[v]")
+            n_seguinte += 1
+        if legenda is not None:
+            if not legenda.exists():
+                raise FileNotFoundError(f"legenda nao encontrada: {legenda}")
+            filtro_final = filtro_final.replace("[v]", "[vbase]")
+            filtro_final += (f";[vbase]subtitles='{_escapar(legenda)}'"
+                             f":force_style='{ESTILO_LEGENDA}'[v]")
+
+        video = NVENC if gpu else X264
+        destino.parent.mkdir(parents=True, exist_ok=True)
+        subprocess.run(
+            ["ffmpeg", "-hide_banner", "-loglevel", "error", "-y",
+             "-i", str(video_concatenado), *entradas_extra, "-i", str(audio),
+             "-filter_complex", filtro_final, "-map", "[v]", "-map", f"{n_seguinte}:a",
+             *video, *CORES, "-pix_fmt", "yuv420p",
+             "-movflags", "+faststart",
+             "-c:a", "aac", "-b:a", "192k", "-shortest", str(destino)],
+            capture_output=True, text=True, check=True)
     return destino
