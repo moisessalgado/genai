@@ -73,6 +73,17 @@ Modelos ficam em `models/` (aponte `HF_HOME` para lá).
   exigiria `UV_PROJECT_ENVIRONMENT` em toda chamada.
 
 
+## Pasta e repositório: `~/dev/genai` (2026-10-03)
+
+A pasta `~/dev/video-factory` virou **`~/dev/genai`**, e o repositório no GitHub virou
+**`moisessalgado/genai`** (o GitHub redireciona a URL antiga). `~/dev/video-factory` ficou
+como **symlink de transição** para `~/dev/genai`; apague quando nada mais apontar para ele
+(o `iam voice` do ai-stack é o último). Na mudança: a `.venv` teve os caminhos reescritos e o
+`genai` reinstalado em modo editável (`uv sync --inexact --reinstall-package genai`), e o
+`fonte:` dos `project.yaml` passou para o caminho novo (três ainda apontavam para
+`~/dev/audio-factory`). Os nomes `T5-XXL (video-factory)`/`CLIP-L (video-factory)` no InvokeAI
+continuam: são rótulos do contrato com o ai-stack, não caminhos.
+
 ## HQ: pipeline em `genai/hq` (2026-10-03)
 
 Etapa 4 da reestruturação: o spike (`spikes/hq/`, hoje só no histórico do git) virou o pacote
