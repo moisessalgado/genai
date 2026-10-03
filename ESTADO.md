@@ -26,6 +26,24 @@ uv pip install --reinstall --index-url https://download.pytorch.org/whl/cu130 to
 Também: `torchaudio.save` no torch 2.11 exige `torchcodec` — use **`soundfile`**.
 Modelos ficam em `models/` (aponte `HF_HOME` para lá).
 
+## Configuração central e CLI por área (2026-10-02)
+
+- **`models/` é symlink para `~/ai/hf`**, o `HF_HOME` único da máquina (definido em
+  `~/.profile` e `~/.config/environment.d/ai.conf`; `~/.cache/huggingface` aponta para lá
+  também). A infra de IA (Ollama/LiteLLM, InvokeAI, pesos, venvs) passa a ser do
+  `~/dev/ai-workspace/ai-stack`; este repo fala com os serviços por HTTP.
+- **Caminhos, venvs e URLs saem de `src/audiofactory/config.py`**, não de `RAIZ / "..."`
+  espalhado. Precedência: padrão no código < `HF_HOME` < `vf.toml` (ou `$VF_CONFIG`) <
+  `VF_<CAMPO>`. Os padrões reproduzem o layout de sempre; `vf.example.toml` lista os campos.
+  `audio-factory doctor` mostra o valor final de cada campo, de onde veio e se o serviço
+  responde.
+- Os runners isolados **atribuem** o `HF_HOME` que recebem (antes: `setdefault`, e o
+  herdado do ambiente venceria o `vf.toml`).
+- **`cli/main.py` só registra as áreas**: `audiolivro`, `video`, `publicar`, `fontes`
+  (`sutta`/`wikisource`), `voz`, `sistema`. Os nomes dos comandos não mudaram.
+  `tests/test_cli_superficie.py` compara a árvore de comandos/opções/padrões com uma foto;
+  mudança de propósito numa opção: `VF_REGRAVAR_CLI=1 uv run pytest tests/test_cli_superficie.py`.
+
 ## Fase 0 — CONCLUÍDA ✅
 
 Benchmark real (`bench/fase0_bench.py`, dados em `bench/out/bench.json`), RTX 5060 Ti:
