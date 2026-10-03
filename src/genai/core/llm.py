@@ -47,14 +47,16 @@ def _corpo(prompt: str, modelo: str, temperatura: float, num_predict: int,
     return corpo
 
 
-def _texto(resposta: dict) -> str:
+def _texto(resposta: dict) -> tuple[str, str | None]:
+    """(texto, motivo de parada) — 'length' quer dizer orçamento estourado."""
     if API == "ollama":
-        return resposta["response"]
-    return resposta["choices"][0]["message"]["content"] or ""
+        return resposta["response"], resposta.get("done_reason")
+    escolha = resposta["choices"][0]
+    return escolha["message"]["content"] or "", escolha.get("finish_reason")
 
 
 def _chamar(prompt: str, *, modelo: str | None, temperatura: float, num_predict: int,
-            timeout: float, url: str | None, schema: dict | None) -> str:
+            timeout: float, url: str | None, schema: dict | None) -> tuple[str, str | None]:
     cabecalhos = {"Content-Type": "application/json"}
     if API == "openai" and os.environ.get("VF_LLM_CHAVE"):
         cabecalhos["Authorization"] = "Bearer " + os.environ["VF_LLM_CHAVE"]
@@ -62,7 +64,8 @@ def _chamar(prompt: str, *, modelo: str | None, temperatura: float, num_predict:
                               num_predict, schema)).encode()
     req = request.Request(url or URL_GENERATE, data=corpo, headers=cabecalhos)
     with request.urlopen(req, timeout=timeout) as r:
-        return _texto(json.loads(r.read())).strip()
+        texto, motivo = _texto(json.loads(r.read()))
+    return texto.strip(), motivo
 
 
 def gerar(prompt: str, *, modelo: str | None = None, temperatura: float = 0.0,
@@ -76,7 +79,7 @@ def gerar(prompt: str, *, modelo: str | None = None, temperatura: float = 0.0,
     devolvendo string vazia. 600 é o piso seguro para respostas curtas.
     """
     return _chamar(prompt, modelo=modelo, temperatura=temperatura,
-                   num_predict=num_predict, timeout=timeout, url=url, schema=None)
+                   num_predict=num_predict, timeout=timeout, url=url, schema=None)[0]
 
 
 def gerar_json(prompt: str, schema: dict, *, modelo: str | None = None,
@@ -87,11 +90,15 @@ def gerar_json(prompt: str, schema: dict, *, modelo: str | None = None,
     decodificada. Validar o CONTEÚDO (ids coerentes etc.) é de quem chama —
     o schema garante a forma, não o sentido.
 
-    `ValueError` se a resposta não for JSON (resposta cortada por
-    `num_predict`, tipicamente)."""
-    texto = _chamar(prompt, modelo=modelo, temperatura=temperatura,
+    `ValueError` se a resposta não for JSON: cortada por `num_predict`
+    (parada 'length') ou, raramente, malformada mesmo com a gramática — visto
+    com o gemma4:12b, string sem fechar e parada 'stop'. Quem chama tenta de
+    novo. Com `format`, o gemma4 não emite raciocínio (medido: `thinking`
+    vazio), então o piso de 600 do `gerar` não se aplica aqui."""
+    texto, motivo = _chamar(prompt, modelo=modelo, temperatura=temperatura,
                     num_predict=num_predict, timeout=timeout, url=url, schema=schema)
     try:
         return json.loads(texto)
     except json.JSONDecodeError as e:
-        raise ValueError(f"LLM não devolveu JSON ({e}); início: {texto[:200]!r}") from e
+        raise ValueError(f"LLM não devolveu JSON ({e}; parada: {motivo}); "
+                         f"início: {texto[:200]!r}") from e
