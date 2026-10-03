@@ -132,3 +132,18 @@ def test_refazer_gera_candidatos_com_seeds_novas(proj, monkeypatch):
     quadros.gerar(p, r, n=2, ids=[6])
     assert len(quadros.candidatos(p, 6)) == 4
     assert len({g[5] for g in falso.grafos}) == 4  # quatro seeds distintas
+
+
+def test_estampa_acrescenta_a_etapa_de_estilo_com_a_lora(proj, monkeypatch):
+    p, r, falso = proj
+    _qa_aprova(monkeypatch)
+    shutil.copy(elenco.ref(p, "channa"), p / "gravura.png")
+    r.estampa = "gravura.png"
+    quadros.gerar(p, r, n=1, ids=[3], estrategia="duas-passadas")
+    prompts = [g[1] for g in falso.grafos]
+    assert len(prompts) == 3 and prompts[2].startswith("style transfer.")
+    assert falso.grafos[2][6] == ((quadros.ESTILO_LORA, quadros.PESO_ESTILO),)
+    assert falso.uploads[-1] == p / "gravura.png"
+    # intermediários e<k>, final cand
+    nomes = sorted(x.name.split("-")[0] for x in quadros.pasta(p, 3).glob("*.png"))
+    assert nomes == ["cand", "e0", "e1"]

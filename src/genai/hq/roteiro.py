@@ -127,6 +127,9 @@ class Roteiro(BaseModel):
     # similaridade a ela menos a similaridade a "HQ moderna" (hq/qa.py). Sem
     # âncora, o QA não julga estilo.
     ancora_estilo: str | None = None
+    # Gravura de referência (caminho relativo ao projeto) para a etapa de
+    # style transfer dos quadros (hq/quadros.py). Sem ela, a etapa não roda.
+    estampa: str | None = None
     personagens: dict[str, Personagem]
     quadros: list[Quadro] = Field(min_length=1)
     paginas: list[Pagina] = Field(min_length=1)

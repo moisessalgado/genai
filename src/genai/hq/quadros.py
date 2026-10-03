@@ -15,10 +15,14 @@ visão). Para quadros com dois personagens há três estratégias:
 - `multi`: folha de A na latente + A e B pelo encoder de visão, num pedido.
 - `duas-passadas`: `multi`, e depois uma edição do resultado (na latente) com
   a folha de B, pedindo só para acertar B. O dobro de GPU por candidato.
+
+Cada quadro é uma cadeia de etapas (`_etapas`): a principal, a correção do
+`duas-passadas` e, se o roteiro tiver `estampa`, uma de estilo.
 """
 from __future__ import annotations
 
 import shutil
+from dataclasses import dataclass
 from pathlib import Path
 
 from PIL import Image
@@ -32,6 +36,13 @@ from .roteiro import Quadro, Roteiro
 ESTRATEGIAS = ("duas-passadas", "multi", "composta")
 ESTRATEGIA_PADRAO = "duas-passadas"
 PAPEL = (244, 236, 216)
+# Etapa opcional de estilo: LoRA de style transfer (Apache-2.0, ver LICENSES.md)
+# com uma gravura de referência (`estampa` no roteiro). Prompt do model card.
+ESTILO_LORA = "Qwen Image Edit Style Transfer (dx8152)"
+PESO_ESTILO = 1.0
+PROMPT_ESTILO = ("style transfer. Change the style of Picture 1 to the style of Picture 2. "
+                 "Keep the composition, the characters with their faces, hair, clothing "
+                 "and poses, and everything depicted in Picture 1 unchanged.")
 # Muda junto com qualquer prompt abaixo: entra na assinatura, e quadros já
 # escolhidos com o prompt velho voltam para a fila.
 VERSAO_PROMPT = 1
@@ -117,9 +128,64 @@ def _duas(q: Quadro, estrategia: str) -> bool:
 
 
 def assinatura(proj: Path, r: Roteiro, q: Quadro, refs: dict[str, Path], estrategia: str) -> str:
-    return hqp.marca(VERSAO_PROMPT, estrategia, r.estilo, q.cena, q.proporcao,
+    estilo = ((ESTILO_LORA, PESO_ESTILO, PROMPT_ESTILO, hqp.marca_arquivo(proj / r.estampa))
+              if r.estampa else ())
+    return hqp.marca(VERSAO_PROMPT, estrategia, r.estilo, q.cena, q.proporcao, *estilo,
                      *(f"{p}={r.personagens[p].ficha}={hqp.marca_arquivo(refs[p])}"
                        for p in q.personagens))
+
+
+@dataclass
+class _Etapa:
+    """Uma edição na cadeia do quadro. A partir da segunda, a imagem da etapa
+    anterior vai na frente (latente) e `extras` vêm depois."""
+    prompt: str
+    extras: list[Path]
+    loras: list[tuple[str, float]]
+
+
+def _etapas(proj: Path, r: Roteiro, q: Quadro, refs: dict[str, Path],
+            estrategia: str) -> list[_Etapa]:
+    es = [_Etapa(prompt_quadro(r, q, estrategia), _refs_do_quadro(proj, refs, q, estrategia), [])]
+    if _duas(q, estrategia):
+        es.append(_Etapa(prompt_correcao(r, q), [refs[q.personagens[1]]], []))
+    if r.estampa:
+        es.append(_Etapa(PROMPT_ESTILO, [proj / r.estampa], [(ESTILO_LORA, PESO_ESTILO)]))
+    return es
+
+
+def _uma_etapa(c, proj: Path, alvo: list[Quadro], planos: dict, marcas: dict, seeds: dict,
+               k: int, rodada: int, progresso) -> None:
+    """Etapa `k` de todos os quadros, num lote só (a fila do InvokeAI não para).
+    A última etapa de cada quadro grava `cand-*`; as do meio, `e<k>-*`."""
+    trabalhos = []
+    for q in alvo:
+        es = planos[q.id]
+        if k >= len(es):
+            continue
+        m = marcas[q.id]
+        for i in seeds[q.id]:
+            final = pasta(proj, q.id) / f"cand-{m}-{i}.png"
+            destino = final if k == len(es) - 1 else pasta(proj, q.id) / f"e{k}-{m}-{i}.png"
+            if final.exists() or destino.exists():
+                continue
+            anterior = pasta(proj, q.id) / f"e{k - 1}-{m}-{i}.png" if k else None
+            trabalhos.append((q, i, destino, anterior, es[k]))
+    if not trabalhos:
+        return
+    subir = [t[3] for t in trabalhos if t[3]] + [p for t in trabalhos for p in t[4].extras]
+    with servico.refs_enviadas(c, subir) as nomes:
+        pedidos = []
+        for q, i, destino, anterior, et in trabalhos:
+            rq = ([nomes[anterior]] if anterior else []) + [nomes[p] for p in et.extras]
+            w, h = q.tamanho
+            sd = hqp.seed(marcas[q.id] + (f"e{k}" if k else ""), i)
+            g = (c.grafo_qwen_edit(et.prompt, rq, w, h, sd, loras=et.loras) if rq
+                 else c.grafo_flux(et.prompt, w, h, sd))
+            pedidos.append((g, destino))
+        if progresso:
+            progresso(f"rodada {rodada + 1}, etapa {k + 1}: {len(pedidos)} imagem(ns)")
+        c.gerar_lote(pedidos, progresso=progresso)
 
 
 def candidatos(proj: Path, qid: int, marca: str | None = None) -> list[Path]:
@@ -156,45 +222,9 @@ def gerar(proj: Path, r: Roteiro, *, n: int = 2, estrategia: str = ESTRATEGIA_PA
             ini = len(candidatos(proj, q.id, marcas[q.id]))
             seeds[q.id] = range(ini, ini + n)
             e.iniciar("quadro", q.id)
-        todas_refs = [p for q in alvo for p in _refs_do_quadro(proj, refs, q, estrategia)]
-        with servico.refs_enviadas(c, todas_refs) as nomes:
-            # passada 1 (única, fora do duas-passadas com 2 personagens)
-            pedidos = []
-            for q in alvo:
-                m = marcas[q.id]
-                w, h = q.tamanho
-                rq = [nomes[p] for p in _refs_do_quadro(proj, refs, q, estrategia)]
-                prefixo = "p1" if _duas(q, estrategia) else "cand"
-                for i in seeds[q.id]:
-                    destino = pasta(proj, q.id) / f"{prefixo}-{m}-{i}.png"
-                    final = pasta(proj, q.id) / f"cand-{m}-{i}.png"
-                    if destino.exists() or final.exists():
-                        continue
-                    g = (c.grafo_qwen_edit(prompt_quadro(r, q, estrategia), rq, w, h,
-                                           hqp.seed(m, i)) if rq
-                         else c.grafo_flux(prompt_quadro(r, q, estrategia), w, h,
-                                           hqp.seed(m, i)))
-                    pedidos.append((g, destino))
-            if pedidos:
-                if progresso:
-                    progresso(f"rodada {rodada + 1}: {len(pedidos)} imagem(ns)")
-                c.gerar_lote(pedidos, progresso=progresso)
-        # passada 2: corrige o personagem da direita contra a folha dele
-        segunda = [(q, i) for q in alvo if _duas(q, estrategia) for i in seeds[q.id]
-                   if not (pasta(proj, q.id) / f"cand-{marcas[q.id]}-{i}.png").exists()]
-        if segunda:
-            p1s = [pasta(proj, q.id) / f"p1-{marcas[q.id]}-{i}.png" for q, i in segunda]
-            with servico.refs_enviadas(c, p1s + [refs[q.personagens[1]] for q, _ in segunda]) as nomes:
-                pedidos = []
-                for (q, i), p1 in zip(segunda, p1s):
-                    w, h = q.tamanho
-                    m = marcas[q.id]
-                    pedidos.append((c.grafo_qwen_edit(
-                        prompt_correcao(r, q), [nomes[p1], nomes[refs[q.personagens[1]]]],
-                        w, h, hqp.seed(m + "c", i)), pasta(proj, q.id) / f"cand-{m}-{i}.png"))
-                if progresso:
-                    progresso(f"rodada {rodada + 1}: segunda passada, {len(pedidos)} imagem(ns)")
-                c.gerar_lote(pedidos, progresso=progresso)
+        planos = {q.id: _etapas(proj, r, q, refs, estrategia) for q in alvo}
+        for k in range(max(len(v) for v in planos.values())):
+            _uma_etapa(c, proj, alvo, planos, marcas, seeds, k, rodada, progresso)
         # QA: todos os candidatos da assinatura atual, inclusive de rodadas anteriores
         for q in alvo:
             cands = candidatos(proj, q.id, marcas[q.id])
