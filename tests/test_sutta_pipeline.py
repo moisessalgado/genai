@@ -13,7 +13,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
-from audiofactory.cli.main import ETAPAS
+from audiofactory.cli.fontes import ETAPAS
 from audiofactory.cli.publicar import _etapa_publish
 
 
