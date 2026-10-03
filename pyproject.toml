@@ -29,6 +29,10 @@ dependencies = [
     # Foi assim que narrador-v1, narrador-v2 e citacao-v1 nasceram, entao nao e
     # opcional: sem declarar, um `uv sync` arranca o Kokoro e o comando quebra.
     "kokoro",
+    # HQ: detector de rosto YuNet (`cv2.FaceDetectorYN`) para os balões não
+    # cobrirem rostos. `<4.12` porque a 4.12 exige numpy 2, e o chatterbox
+    # segura o numpy 1.26. Headless: sem Qt/GUI arrastados para a venv.
+    "opencv-python-headless>=4.10,<4.12",
 ]
 
 [dependency-groups]

@@ -123,6 +123,10 @@ class Roteiro(BaseModel):
     titulo: str
     idioma: str = "pt-BR"
     estilo: str = Field(description="bloco de estilo repetido em todo prompt, em inglês")
+    # Frase curta (inglês) que descreve o estilo para o CLIP do QA; a nota é a
+    # similaridade a ela menos a similaridade a "HQ moderna" (hq/qa.py). Sem
+    # âncora, o QA não julga estilo.
+    ancora_estilo: str | None = None
     personagens: dict[str, Personagem]
     quadros: list[Quadro] = Field(min_length=1)
     paginas: list[Pagina] = Field(min_length=1)

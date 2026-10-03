@@ -23,18 +23,21 @@ def montar(imagens: list[Path], destino: Path, *, altura: int = 480, por_linha: 
             miniaturas.append(im.resize((round(im.width * altura / im.height), altura)))
     if not miniaturas:
         raise ValueError("nenhuma imagem para a folha de contato")
-    larg = max(m.width for m in miniaturas)
     rotulo = 64
-    linhas = (len(miniaturas) + por_linha - 1) // por_linha
-    folha = Image.new("RGB", (larg * min(por_linha, len(miniaturas)),
-                              (altura + rotulo) * linhas), "white")
+    linhas = [list(range(i, min(i + por_linha, len(miniaturas))))
+              for i in range(0, len(miniaturas), por_linha)]
+    larg = max(sum(miniaturas[i].width for i in ln) + 8 * (len(ln) - 1) for ln in linhas)
+    folha = Image.new("RGB", (larg, (altura + rotulo) * len(linhas)), "white")
     d = ImageDraw.Draw(folha)
-    for i, (p, m) in enumerate(zip(imagens, miniaturas)):
-        x, y = (i % por_linha) * larg, (i // por_linha) * (altura + rotulo)
-        folha.paste(m, (x, y))
-        d.text((x + 6, y + altura + 4), p.name, font=fonte, fill="black")
-        if p.name in notas:
-            d.text((x + 6, y + altura + 32), notas[p.name], font=fonte, fill=(160, 0, 0))
+    for li, ln in enumerate(linhas):
+        x, y = 0, li * (altura + rotulo)
+        for i in ln:
+            p, m = imagens[i], miniaturas[i]
+            folha.paste(m, (x, y))
+            d.text((x + 6, y + altura + 4), p.name, font=fonte, fill="black")
+            if p.name in notas:
+                d.text((x + 6, y + altura + 32), notas[p.name], font=fonte, fill=(160, 0, 0))
+            x += m.width + 8
     destino.parent.mkdir(parents=True, exist_ok=True)
     folha.save(destino)
     return destino

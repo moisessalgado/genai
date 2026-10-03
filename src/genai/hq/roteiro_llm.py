@@ -44,6 +44,8 @@ ESTILO_PADRAO = (
     "calligraphy, no signature, no seals, no cartouche."
 )
 
+ANCORA_PADRAO = "a traditional Japanese woodblock print by Hokusai, flat colors, washi paper"
+
 
 # ------------------------------------------------------------ schemas do LLM
 class _PersonagemLLM(BaseModel):
@@ -282,6 +284,7 @@ def _uma_pagina(n: int, plano: _Plano, pers: dict[str, Personagem], ids: dict[st
 
 
 def gerar(fonte: str, *, slug: str, paginas: int = 1, estilo: str = ESTILO_PADRAO,
+          ancora_estilo: str | None = ANCORA_PADRAO,
           idioma: str = "pt-BR", titulo: str | None = None,
           gerar_json: GerarJson | None = None, progresso=None) -> Roteiro:
     """Rascunho completo do roteiro. Sobe `ValueError` se o LLM não convergir."""
@@ -302,7 +305,7 @@ def gerar(fonte: str, *, slug: str, paginas: int = 1, estilo: str = ESTILO_PADRA
         pers[pid] = Personagem(nome=p.nome, ficha=p.ficha)
         ids.update({p.id: pid, p.nome: pid, _slug(p.nome): pid, pid: pid})
     base = {"slug": slug, "titulo": titulo or plano.titulo, "idioma": idioma,
-            "estilo": estilo, "personagens": {k: v.model_dump() for k, v in pers.items()}}
+            "estilo": estilo, "ancora_estilo": ancora_estilo, "personagens": {k: v.model_dump() for k, v in pers.items()}}
     quadros: list[Quadro] = []
     pags: list[Pagina] = []
     for n in range(1, paginas + 1):
