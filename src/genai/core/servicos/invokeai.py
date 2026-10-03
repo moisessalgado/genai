@@ -175,10 +175,14 @@ class InvokeAI:
 
     def grafo_qwen_edit(self, prompt: str, refs: list[str], largura: int, altura: int,
                         seed: int, board_id: str | None = None,
-                        lightning: bool = True) -> tuple[dict, list]:
+                        lightning: bool = True,
+                        loras: list[tuple[str, float]] = ()) -> tuple[dict, list]:
         """Qwen-Image-Edit 2511. `refs[0]` vai também para o espaço latente (o
         InvokeAI só aceita UMA reference_latents); as demais entram só pelo
-        encoder de visão."""
+        encoder de visão.
+
+        `loras`: (nome no InvokeAI, peso), encadeadas depois da Lightning —
+        por exemplo a de style transfer da HQ."""
         dec = {"id": "dec", "type": "qwen_image_l2i", "is_intermediate": False}
         if board_id:
             dec["board"] = {"board_id": board_id}
@@ -201,13 +205,15 @@ class InvokeAI:
                  _e("te", "conditioning", "dn", "positive_conditioning"),
                  _e("i2l", "latents", "dn", "reference_latents"),
                  _e("dn", "latents", "dec", "latents")]
-        if lightning:
-            nodes["lora"] = {"id": "lora", "type": "qwen_image_lora_loader", "weight": 1.0,
-                             "lora": self.modelo(QWEN_LIGHTNING)}
-            edges += [_e("loader", "transformer", "lora", "transformer"),
-                      _e("lora", "transformer", "dn", "transformer")]
-        else:
-            edges.append(_e("loader", "transformer", "dn", "transformer"))
+        cadeia = ([(QWEN_LIGHTNING, 1.0)] if lightning else []) + list(loras)
+        anterior = "loader"
+        for i, (nome, peso) in enumerate(cadeia):
+            nid = f"lora{i}"
+            nodes[nid] = {"id": nid, "type": "qwen_image_lora_loader", "weight": peso,
+                          "lora": self.modelo(nome)}
+            edges.append(_e(anterior, "transformer", nid, "transformer"))
+            anterior = nid
+        edges.append(_e(anterior, "transformer", "dn", "transformer"))
         return nodes, edges
 
     # --------------------------------------------------------- em lote

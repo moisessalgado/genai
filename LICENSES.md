@@ -131,7 +131,7 @@ Black Forest Labs) fica fora do pipeline por esse motivo, mesmo tendo qualidade 
 
 | Fonte | Licença | Uso | Nota |
 |---|---|---|---|
-| Comic Neue Bold (`spikes/hq/fonts/ComicNeue-Bold.ttf`) | SIL Open Font License 1.1 | Letreiramento da HQ | `OFL.txt` acompanha o arquivo; uso comercial e embutir em PDF permitidos, vender a fonte sozinha não |
+| Comic Neue Bold (`src/genai/hq/fonts/ComicNeue-Bold.ttf`) | SIL Open Font License 1.1 | Letreiramento da HQ | `OFL.txt` acompanha o arquivo; uso comercial e embutir em PDF permitidos, vender a fonte sozinha não |
 
 ## Watermark
 

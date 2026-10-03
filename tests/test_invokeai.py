@@ -12,7 +12,8 @@ from genai.core.servicos import invokeai  # noqa: E402
 
 MODELOS = [{"key": f"k-{n}", "hash": "h", "name": n, "base": "b", "type": "t", "extra": 1}
            for n in (invokeai.FLUX_SCHNELL, invokeai.FLUX_VAE, invokeai.FLUX_T5,
-                     invokeai.FLUX_CLIP)]
+                     invokeai.FLUX_CLIP, invokeai.QWEN_EDIT, invokeai.QWEN_VAE,
+                     invokeai.QWEN_VL, invokeai.QWEN_LIGHTNING, "Estilo X")]
 
 
 class Falso(invokeai.InvokeAI):
@@ -110,3 +111,32 @@ def test_liberar_vram_com_servico_fora_do_ar_nao_e_erro(monkeypatch):
     monkeypatch.setattr(invokeai, "cliente",
                         lambda: invokeai.InvokeAI(base="http://127.0.0.1:9", timeout_s=1))
     assert invokeai.liberar_vram_se_no_ar() is False
+
+
+def _cadeia_ate_o_denoise(edges):
+    """Nós por onde o `transformer` passa, do loader ao denoise."""
+    prox = {e["source"]["node_id"]: e["destination"]["node_id"] for e in edges
+            if e["source"]["field"] == "transformer"}
+    no, caminho = "loader", ["loader"]
+    while no in prox:
+        no = prox[no]
+        caminho.append(no)
+    return caminho
+
+
+def test_qwen_edit_encadeia_lightning_e_loras_extras():
+    c = Falso()
+    nodes, edges = c.grafo_qwen_edit("p", ["ref-a", "ref-b"], 1024, 1024, 3,
+                                     loras=[("Estilo X", 0.8)])
+    assert _cadeia_ate_o_denoise(edges) == ["loader", "lora0", "lora1", "dn"]
+    assert nodes["lora0"]["lora"]["name"] == invokeai.QWEN_LIGHTNING
+    assert (nodes["lora1"]["lora"]["name"], nodes["lora1"]["weight"]) == ("Estilo X", 0.8)
+    assert nodes["i2l"]["image"] == {"image_name": "ref-a"}  # só a primeira é latente
+    assert [r["image_name"] for r in nodes["te"]["reference_images"]] == ["ref-a", "ref-b"]
+    assert nodes["dn"]["steps"] == 4
+
+
+def test_qwen_edit_sem_lightning_vai_direto_e_com_40_passos():
+    nodes, edges = Falso().grafo_qwen_edit("p", ["r"], 512, 512, 1, lightning=False)
+    assert _cadeia_ate_o_denoise(edges) == ["loader", "dn"]
+    assert nodes["dn"]["steps"] == 40
