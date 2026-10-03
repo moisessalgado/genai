@@ -7,9 +7,9 @@ import typer
 import yaml
 from click.core import ParameterSource
 
-from .. import project as proj_mod
-from ..config import settings
-from ..store.db import Store
+from ..core import projeto as proj_mod
+from ..core.config import settings
+from ..core.estado import Store
 from ._comum import console
 from .app import app
 from .audiolivro import _etapa_build, _etapa_export, _etapa_run, _etapa_script
@@ -62,7 +62,7 @@ def sutta(ctx: typer.Context,
     `rights:`, e a descrição do vídeo os reproduz. A decisão de publicar
     continua sendo do operador (ESTADO.md) — por isso o padrão é `private`.
     """
-    from ..ingest import acessoaoinsight as ai
+    from ..core.ingest import acessoaoinsight as ai
 
     if ate not in ETAPAS:
         console.print(f"[red]etapa desconhecida:[/] {ate} — use {', '.join(ETAPAS)}")
@@ -252,7 +252,7 @@ def wikisource(ctx: typer.Context,
     colhido da própria página. Ao contrário do `sutta`, não há aviso de
     licença bloqueando monetização.
     """
-    from ..ingest import wikisource as wk
+    from ..core.ingest import wikisource as wk
 
     if ate not in ETAPAS:
         console.print(f"[red]etapa desconhecida:[/] {ate} — use {', '.join(ETAPAS)}")

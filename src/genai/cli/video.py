@@ -8,8 +8,8 @@ import typer
 from click.core import ParameterSource
 from rich.table import Table
 
-from .. import project as proj_mod
-from ..config import settings
+from ..core import projeto as proj_mod
+from ..core.config import settings
 from ._comum import _proj, console
 from .app import app
 

@@ -7,11 +7,13 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
-from genai.qa.speaker import (DUR_PLENA_S, MIN_JULGAVEL_S,
-                                     SIMILARIDADE_MINIMA,
-                                     limiar_por_duracao)
-from genai.qa.verify import (FATOR_MAX, FATOR_MIN,
-                                    duracao_esperada)
+from genai.qa.speaker import (
+    DUR_PLENA_S,
+    MIN_JULGAVEL_S,
+    SIMILARIDADE_MINIMA,
+    limiar_por_duracao,
+)
+from genai.qa.verify import FATOR_MAX, FATOR_MIN, duracao_esperada
 
 # -- duracao esperada: overhead fixo + ritmo ----------------------------------
 

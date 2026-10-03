@@ -6,7 +6,7 @@ from pathlib import Path
 import typer
 from rich.console import Console
 
-from .. import project as proj_mod
+from ..core import projeto as proj_mod
 
 console = Console()
 

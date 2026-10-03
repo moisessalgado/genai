@@ -18,7 +18,7 @@ from __future__ import annotations
 import random
 from pathlib import Path
 
-from ..config import settings
+from ..core.config import settings
 
 DIRETORIO_PADRAO = settings().assets_dir / "slides"
 

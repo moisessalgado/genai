@@ -29,8 +29,8 @@ from pathlib import Path
 
 import numpy as np
 
-from ..config import settings
-from ..servicos import invokeai
+from ..core.config import settings
+from ..core.servicos import invokeai
 from .musica import SAMPLE_RATE, _ffmpeg
 from .musica_ace import _por_pico, moldar, montar  # genéricas, não específicas do ACE
 

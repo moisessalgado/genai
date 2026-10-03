@@ -6,7 +6,7 @@ from pathlib import Path
 import typer
 from rich.table import Table
 
-from ..config import settings
+from ..core.config import settings
 from ..engines.chatterbox_engine import ChatterboxEngine
 from ._comum import console
 from .app import app
@@ -51,8 +51,7 @@ def _dispositivos_captura() -> list[tuple[str, str, str]]:
 def _mostrar_take(take, titulo: str) -> bool:
     """Imprime a análise e devolve True se a gravação serve como referência."""
     t = Table("medida", "valor", "alvo", title=titulo)
-    from ..audio.analise import (CORTE_MIN_HZ, PICO_ALVO_DB, RUIDO_MAX_DB,
-                                 SNR_MIN_DB)
+    from ..audio.analise import CORTE_MIN_HZ, PICO_ALVO_DB, RUIDO_MAX_DB, SNR_MIN_DB
     t.add_row("duração", f"{take.duracao_s:.1f} s", "20–180 s")
     t.add_row("taxa/canais", f"{take.sample_rate} Hz · {take.canais}", "48000 Hz · 1")
     t.add_row("pico", f"{take.pico_db:.1f} dBFS", f"{PICO_ALVO_DB:.0f} dBFS")

@@ -21,7 +21,7 @@ from urllib import error, request
 from . import imagem as imagem_mod
 from . import imagem_qa
 from . import slides as slides_mod
-from ..config import settings
+from ..core.config import settings
 from ..narration.llm import OLLAMA_URL
 
 MODELO_OLLAMA = settings().llm_modelo

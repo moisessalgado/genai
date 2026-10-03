@@ -18,7 +18,7 @@ from urllib import error, request
 
 from num2words import num2words
 
-from ..config import settings
+from ..core.config import settings
 
 OLLAMA_URL = settings().llm_url.rstrip("/") + "/api/generate"
 MODELO_PADRAO = settings().llm_modelo

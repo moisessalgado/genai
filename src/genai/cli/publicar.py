@@ -7,8 +7,8 @@ from pathlib import Path
 
 import typer
 
-from .. import project as proj_mod
-from ..config import settings
+from ..core import projeto as proj_mod
+from ..core.config import settings
 from ._comum import _proj, console
 from .app import app
 

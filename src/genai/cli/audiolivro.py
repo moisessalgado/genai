@@ -8,14 +8,14 @@ import typer
 import yaml
 from rich.table import Table
 
-from .. import project as proj_mod
-from ..config import settings
-from ..servicos import invokeai
+from ..core import projeto as proj_mod
+from ..core.config import settings
+from ..core.servicos import invokeai
 from ..engines.chatterbox_engine import ChatterboxEngine
 from ..pipeline import Runner
 from ..qa.verify import Verifier
 from ..script.models import Script
-from ..store.db import Store
+from ..core.estado import Store
 from ._comum import _proj, console
 from .app import app
 

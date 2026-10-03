@@ -49,7 +49,7 @@ class Voz:
 def raiz_vozes(raiz: Path) -> Path:
     """Pasta do registry. Para a raiz do repositorio vale a configuracao central
     (`voices_dir`); qualquer outra raiz (testes) continua com `<raiz>/voices`."""
-    from .config import settings
+    from .core.config import settings
 
     s = settings()
     return s.voices_dir if raiz == s.raiz else raiz / "voices"

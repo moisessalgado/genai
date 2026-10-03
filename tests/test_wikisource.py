@@ -21,8 +21,8 @@ from bs4 import BeautifulSoup
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
-from genai.ingest import wikisource as wk
-from genai.ingest.loader import detectar_capitulos
+from genai.core.ingest import wikisource as wk
+from genai.core.ingest.loader import detectar_capitulos
 
 FIXTURES = Path(__file__).parent / "fixtures" / "wikisource"
 CAPITULO_HTML = FIXTURES / "narizinho-arrebitado.html"

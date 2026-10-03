@@ -19,8 +19,8 @@ import hashlib
 import subprocess
 from pathlib import Path
 
-from ..config import settings
-from ..servicos import invokeai
+from ..core.config import settings
+from ..core.servicos import invokeai
 from . import imagem_qa
 from .slides import DIRETORIO_PADRAO
 

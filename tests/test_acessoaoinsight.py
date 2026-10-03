@@ -18,8 +18,11 @@ import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
-from genai.ingest.acessoaoinsight import (
-    codigo_da_url, decodificar, extrair, normalizar_url,
+from genai.core.ingest.acessoaoinsight import (
+    codigo_da_url,
+    decodificar,
+    extrair,
+    normalizar_url,
 )
 
 FIXTURE = Path(__file__).parent / "fixtures" / "ANIV.45.php.html"

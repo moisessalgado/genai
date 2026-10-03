@@ -8,7 +8,7 @@ import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
-from genai import config  # noqa: E402
+from genai.core import config  # noqa: E402
 
 
 def _toml(tmp_path: Path, texto: str) -> Path:

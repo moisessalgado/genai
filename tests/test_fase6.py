@@ -10,8 +10,13 @@ import pytest
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
 from genai.audio.process import chapters_txt
-from genai.ingest.loader import (_bordas_repetidas, _unir_linhas, detectar_capitulos,
-                                        limpar, ler)
+from genai.core.ingest.loader import (
+    _bordas_repetidas,
+    _unir_linhas,
+    detectar_capitulos,
+    limpar,
+    ler,
+)
 from genai.pipeline import _repartir
 from genai.qa.policy import Tentativa, escolher, deve_repetir
 

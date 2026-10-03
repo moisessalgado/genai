@@ -17,7 +17,13 @@ import soundfile as sf
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
 from genai.audio.musica_ace import (
-    CRUZAMENTO_S, DIP_CENTRO_HZ, PALETAS, SAMPLE_RATE, _seed, moldar, montar,
+    CRUZAMENTO_S,
+    DIP_CENTRO_HZ,
+    PALETAS,
+    SAMPLE_RATE,
+    _seed,
+    moldar,
+    montar,
     prompts,
 )
 

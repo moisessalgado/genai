@@ -13,8 +13,13 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
-from genai.publish.youtube import (DISCLOSURE, descricao, formatar_keywords,
-                                          mesclar_branding, metadados)
+from genai.publish.youtube import (
+    DISCLOSURE,
+    descricao,
+    formatar_keywords,
+    mesclar_branding,
+    metadados,
+)
 
 
 def _cfg(rights: dict) -> dict:

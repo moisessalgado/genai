@@ -23,7 +23,7 @@ import tomllib
 from dataclasses import dataclass, field, fields
 from pathlib import Path
 
-RAIZ_PADRAO = Path(__file__).resolve().parents[2]
+RAIZ_PADRAO = Path(__file__).resolve().parents[3]  # core/ -> genai/ -> src/ -> raiz
 
 # Seção do TOML onde cada campo mora. O nome dentro da seção é o do campo sem o
 # prefixo/sufixo redundante: [caminhos] projects = ..., [venvs] imagem = ...

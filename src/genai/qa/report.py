@@ -11,8 +11,8 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from ..audio.process import LUFS_ALVO, medir_loudness
-from ..qa.speaker import SIMILARIDADE_MINIMA as LIMIAR_VOZ
-from ..qa.speaker import limiar_por_duracao
+from .speaker import SIMILARIDADE_MINIMA as LIMIAR_VOZ
+from .speaker import limiar_por_duracao
 
 CER_ALVO = 0.02
 REGEN_ALVO = 0.05

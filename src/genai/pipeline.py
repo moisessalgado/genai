@@ -14,20 +14,25 @@ from pathlib import Path
 
 import numpy as np
 
-from .audio.process import (PAUSA_CAPITULO_MS, PAUSA_PARAGRAFO_MS, Segmento,
-                            montar_com_marcas, salvar_wav)
+from .audio.process import (
+    PAUSA_CAPITULO_MS,
+    PAUSA_PARAGRAFO_MS,
+    Segmento,
+    montar_com_marcas,
+    salvar_wav,
+)
 from .engines.base import TTSEngine
 from .qa.policy import Decisao, Tentativa, deve_repetir, escolher
 from .qa.verify import Verifier
 from .script.models import Script
-from .store.db import Store
+from .core.estado import Store
 
 
 def _lexicon_do_projeto() -> dict[str, str]:
     """Mesmos arquivos de lexico que o `script` usou para respelar."""
     import yaml
 
-    from .config import settings
+    from .core.config import settings
 
     lex: dict[str, str] = {}
     for f in sorted(settings().lexicon_dir.glob("*.yaml")):

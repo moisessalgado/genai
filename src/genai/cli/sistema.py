@@ -5,7 +5,7 @@ from pathlib import Path
 
 from rich.table import Table
 
-from ..config import settings
+from ..core.config import settings
 from ._comum import console
 from .app import app
 

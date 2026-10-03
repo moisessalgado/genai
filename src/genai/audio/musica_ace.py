@@ -22,8 +22,8 @@ from pathlib import Path
 
 import numpy as np
 
-from ..config import settings
-from ..servicos import invokeai
+from ..core.config import settings
+from ..core.servicos import invokeai
 from .musica import SAMPLE_RATE, _ffmpeg
 
 VENV = settings().venv_musica
