@@ -9,7 +9,6 @@ from pathlib import Path
 import typer
 import yaml
 from click.core import ParameterSource
-from rich.console import Console
 from rich.table import Table
 
 from .. import project as proj_mod
@@ -19,17 +18,9 @@ from ..pipeline import Runner
 from ..qa.verify import Verifier
 from ..script.models import Script
 from ..store.db import Store
+from ._comum import _proj, console
+from .app import app
 
-app = typer.Typer(help="Audio Factory — audiolivros narrados por IA, 100% local",
-                  no_args_is_help=True)
-console = Console()
-
-
-def _proj(slug: str) -> Path:
-    p = proj_mod.dir_projeto(slug)
-    if not p.exists():
-        raise typer.BadParameter(f"projeto não encontrado: {slug}")
-    return p
 
 
 def _lexicon() -> dict[str, str]:
