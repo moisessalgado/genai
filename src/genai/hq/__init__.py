@@ -1,5 +1,6 @@
-"""HQ: roteiro, elenco, quadros, letreiramento, layout e export (PDF/CBZ/webtoon).
+"""HQ: roteiro, elenco, quadros, letreiramento, layout, export e motion comic.
 
-Vazio por enquanto: o ponto de partida é o spike em `spikes/hq/` (elenco com
-folha-modelo + Qwen-Image-Edit pelo InvokeAI, via `core/servicos/invokeai.py`).
+Ordem das etapas e o que cada módulo faz: ver `cli/hq.py` e ESTADO.md
+("HQ: pipeline em genai/hq"). O spike que originou o desenho
+(`spikes/hq/`) saiu da árvore em 2026-10-03; está no histórico do git.
 """

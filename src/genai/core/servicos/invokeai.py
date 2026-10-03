@@ -6,7 +6,8 @@ serializando a GPU e Canvas para retoque manual. Este repo só monta os grafos
 e fala HTTP — nenhum peso, nenhuma venv de diffusers aqui.
 
 Os nomes de nós/campos são os do InvokeAI 6.14 (validados no spike de HQ,
-`spikes/hq/invoke.py`). Os nomes de modelo são os registrados no InvokeAI.
+`spikes/hq/invoke.py`, hoje só no histórico do git). Os nomes de modelo são
+os registrados no InvokeAI.
 """
 from __future__ import annotations
 
