@@ -36,6 +36,9 @@ TAMANHOS: dict[str, tuple[int, int]] = {
     "alto": (768, 1024),
 }
 
+# Como quadros com dois personagens recebem as refs (ver hq/quadros.py).
+Estrategia = Literal["multi", "duas-passadas", "composta"]
+
 MAX_PERSONAGENS_QUADRO = 2
 MAX_QUADROS_TIRA = 3
 # Acima disto o balão come o quadro: melhor quebrar a fala em dois.
@@ -134,6 +137,9 @@ class Roteiro(BaseModel):
     # Gravura de referência (caminho relativo ao projeto) para a etapa de
     # style transfer dos quadros (hq/quadros.py). Sem ela, a etapa não roda.
     estampa: str | None = None
+    # Faz parte da assinatura de cada quadro, por isso mora aqui e não na linha
+    # de comando: qualquer comando (status, paginas) sabe se a escolha vale.
+    estrategia: Estrategia = "multi"
     personagens: dict[str, Personagem]
     quadros: list[Quadro] = Field(min_length=1)
     paginas: list[Pagina] = Field(min_length=1)

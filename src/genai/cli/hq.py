@@ -180,13 +180,14 @@ def limpar(slug: str, n: int = typer.Option(2, help="candidatos por personagem")
 
 @hq_app.command("quadros")
 def quadros_cmd(slug: str, n: int = typer.Option(2, help="candidatos por quadro e rodada"),
-                estrategia: str = typer.Option(None,
-                    help="dois personagens: duas-passadas, multi ou composta"),
                 ids: str = typer.Option(None, help="só estes quadros, ex.: 1,3-5"),
                 rodadas: int = typer.Option(2, help="rodadas se o QA reprovar todos"),
                 refazer: bool = typer.Option(False, "--refazer",
                     help="gera candidatos novos para --ids mesmo já escolhidos")):
-    """Gera os quadros com as refs do elenco; o QA escolhe o melhor de cada um."""
+    """Gera os quadros com as refs do elenco; o QA escolhe o melhor de cada um.
+
+    Quadros com dois personagens seguem a `estrategia` do roteiro.yaml (multi,
+    duas-passadas ou composta)."""
     from ..hq import contato, qa, quadros
     p = _proj(slug)
     r = _roteiro(p)
@@ -197,8 +198,7 @@ def quadros_cmd(slug: str, n: int = typer.Option(2, help="candidatos por quadro 
         quadros.refazer(p, r, alvo)
     with console.status("quadros…") as st:
         try:
-            rel = quadros.gerar(p, r, n=n, estrategia=estrategia or quadros.ESTRATEGIA_PADRAO,
-                                ids=alvo, rodadas=rodadas, progresso=st.update)
+            rel = quadros.gerar(p, r, n=n, ids=alvo, rodadas=rodadas, progresso=st.update)
         except (RuntimeError, ValueError) as e:
             _falha(e)
     if not rel:
@@ -243,8 +243,12 @@ def status(slug: str):
     """Onde cada personagem e quadro está."""
     p = _proj(slug)
     r = _roteiro(p)
-    from ..hq import elenco
+    from ..hq import elenco, quadros
     elenco.sincronizar(p, r)
+    try:
+        quadros.sincronizar(p, r)
+    except ValueError:
+        pass  # sem refs ainda: os quadros nem começaram
     _status(p, r)
 
 

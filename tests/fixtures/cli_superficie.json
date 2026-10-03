@@ -676,7 +676,7 @@
      ]
     },
     "quadros": {
-     "ajuda": "Gera os quadros com as refs do elenco; o QA escolhe o melhor de cada um.",
+     "ajuda": "Gera os quadros com as refs do elenco; o QA escolhe o melhor de cada um.\n\nQuadros com dois personagens seguem a `estrategia` do roteiro.yaml (multi,\nduas-passadas ou composta).",
      "parametros": [
       {
        "nome": "slug",
@@ -703,20 +703,6 @@
        "padrao": 2,
        "flag": false,
        "ajuda": "candidatos por quadro e rodada"
-      },
-      {
-       "nome": "estrategia",
-       "tipo": "option",
-       "click_tipo": "str",
-       "opts": [
-        "--estrategia"
-       ],
-       "secundarias": [],
-       "obrigatorio": false,
-       "multiplo": false,
-       "padrao": null,
-       "flag": false,
-       "ajuda": "dois personagens: duas-passadas, multi ou composta"
       },
       {
        "nome": "ids",

@@ -24,6 +24,7 @@ from __future__ import annotations
 import shutil
 from dataclasses import dataclass
 from pathlib import Path
+from typing import get_args
 
 from PIL import Image
 
@@ -31,14 +32,14 @@ from . import elenco
 from . import projeto as hqp
 from . import qa
 from . import servico
-from .roteiro import Quadro, Roteiro
+from .roteiro import Estrategia, Quadro, Roteiro
 
-ESTRATEGIAS = ("duas-passadas", "multi", "composta")
 # Medido no piloto (quadros 2, 3 e 5, 6 candidatos cada): `multi` encena bem
 # (os dois na mesma carruagem, interagindo) em 219 s; `duas-passadas` custou
 # 432 s sem ganho visível de identidade; `composta` saiu mais ukiyo-e, mas
 # copiou o layout lado a lado, duplicou o Channa e rabiscou "texto".
-ESTRATEGIA_PADRAO = "multi"
+ESTRATEGIAS = get_args(Estrategia)
+ESTRATEGIA_PADRAO = Roteiro.model_fields["estrategia"].default
 PAPEL = (244, 236, 216)
 # Etapa opcional de estilo: LoRA de style transfer (Apache-2.0, ver LICENSES.md)
 # com uma gravura de referência (`estampa` no roteiro). Prompt do model card.
@@ -199,21 +200,21 @@ def candidatos(proj: Path, qid: int, marca: str | None = None) -> list[Path]:
     return sorted(pasta(proj, qid).glob(padrao), key=lambda p: (len(p.name), p.name))
 
 
-def _base(proj: Path, r: Roteiro, estrategia: str):
-    if estrategia not in ESTRATEGIAS:
-        raise ValueError(f"estratégia desconhecida: {estrategia} ({', '.join(ESTRATEGIAS)})")
+def sincronizar(proj: Path, r: Roteiro):
+    """Alinha o estado dos quadros com o roteiro (cena, refs, estratégia).
+    Devolve (refs, estado, assinaturas)."""
     refs = elenco.refs_prontas(proj, r)
     e = hqp.estado(proj)
-    marcas = {q.id: assinatura(proj, r, q, refs, estrategia) for q in r.quadros}
+    marcas = {q.id: assinatura(proj, r, q, refs, r.estrategia) for q in r.quadros}
     e.sincronizar("quadro", {str(k): v for k, v in marcas.items()})
-    e.reset_stale()
     return refs, e, marcas
 
 
-def gerar(proj: Path, r: Roteiro, *, n: int = 2, estrategia: str = ESTRATEGIA_PADRAO,
-          ids: list[int] | None = None, rodadas: int = 2, progresso=None) -> dict[int, dict]:
+def gerar(proj: Path, r: Roteiro, *, n: int = 2, ids: list[int] | None = None, rodadas: int = 2, progresso=None) -> dict[int, dict]:
     """Gera, avalia e escolhe. Devolve {quadro: notas do QA por candidato}."""
-    refs, e, marcas = _base(proj, r, estrategia)
+    refs, e, marcas = sincronizar(proj, r)
+    e.reset_stale()
+    estrategia = r.estrategia
     c = servico.cliente()
     relatorio: dict[int, dict] = {}
     for rodada in range(rodadas):
@@ -275,8 +276,9 @@ def escolher(proj: Path, r: Roteiro, qid: int, arquivo: Path) -> Path:
 
 
 def escolhidos(proj: Path, r: Roteiro) -> dict[int, Path]:
-    """{quadro: imagem escolhida} — erro listando os que faltam."""
-    e = hqp.estado(proj)
+    """{quadro: imagem escolhida} — erro listando os que faltam. Sincroniza
+    antes: cena reescrita depois da escolha não passa com a imagem velha."""
+    _, e, _ = sincronizar(proj, r)
     out, faltam = {}, []
     for q in r.ordem_de_leitura():
         p = e.escolhido("quadro", q.id)

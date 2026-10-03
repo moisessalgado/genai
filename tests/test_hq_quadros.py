@@ -41,7 +41,8 @@ def _qa_aprova(monkeypatch, aprova=lambda p: True):
 def test_duas_passadas_corrige_o_da_direita_com_a_folha_dele(proj, monkeypatch):
     p, r, falso = proj
     _qa_aprova(monkeypatch)
-    quadros.gerar(p, r, n=2, ids=[3], estrategia="duas-passadas")
+    r.estrategia = "duas-passadas"
+    quadros.gerar(p, r, n=2, ids=[3])
     passada1 = [g for g in falso.grafos if "Picture 1 is Siddhartha" in g[1]]
     passada2 = [g for g in falso.grafos if g[1].startswith("In Picture 1, redraw only Channa")]
     assert len(passada1) == 2 and len(passada2) == 2
@@ -56,7 +57,8 @@ def test_duas_passadas_corrige_o_da_direita_com_a_folha_dele(proj, monkeypatch):
 def test_composta_manda_uma_ref_lado_a_lado(proj, monkeypatch):
     p, r, falso = proj
     _qa_aprova(monkeypatch)
-    quadros.gerar(p, r, n=1, ids=[2], estrategia="composta")
+    r.estrategia = "composta"
+    quadros.gerar(p, r, n=1, ids=[2])
     (g,) = falso.grafos
     assert len(g[2]) == 1 and "side by side" in g[1]
     assert falso.uploads[0].name.startswith("siddhartha+channa-")
@@ -139,7 +141,8 @@ def test_estampa_acrescenta_a_etapa_de_estilo_com_a_lora(proj, monkeypatch):
     _qa_aprova(monkeypatch)
     shutil.copy(elenco.ref(p, "channa"), p / "gravura.png")
     r.estampa = "gravura.png"
-    quadros.gerar(p, r, n=1, ids=[3], estrategia="duas-passadas")
+    r.estrategia = "duas-passadas"
+    quadros.gerar(p, r, n=1, ids=[3])
     prompts = [g[1] for g in falso.grafos]
     assert len(prompts) == 3 and prompts[2].startswith("style transfer.")
     assert falso.grafos[2][6] == ((quadros.ESTILO_LORA, quadros.PESO_ESTILO),)
@@ -147,3 +150,13 @@ def test_estampa_acrescenta_a_etapa_de_estilo_com_a_lora(proj, monkeypatch):
     # intermediários e<k>, final cand
     nomes = sorted(x.name.split("-")[0] for x in quadros.pasta(p, 3).glob("*.png"))
     assert nomes == ["cand", "e0", "e1"]
+
+
+def test_cena_mudada_depois_da_escolha_nao_passa_nas_paginas(proj, monkeypatch):
+    p, r, _ = proj
+    _qa_aprova(monkeypatch)
+    quadros.gerar(p, r, n=1)
+    assert len(quadros.escolhidos(p, r)) == 6
+    r.quadro(4).cena += " At night."
+    with pytest.raises(ValueError, match=r"quadros sem escolha: \[4\]"):
+        quadros.escolhidos(p, r)
