@@ -3,7 +3,7 @@
 Auditoria exigida pela §14 do TDD. **Nenhum peso entra no pipeline sem uma linha aqui.**
 Reconferir o model card a cada atualização de versão — licença de peso pode mudar entre releases.
 
-Última verificação: 2026-09-01.
+Última verificação: 2026-10-02.
 
 ## Pesos de TTS
 
@@ -60,16 +60,39 @@ piano alegre e reconhecível, no lugar da trilha ambiente/contemplativa usada no
 
 ## Pesos de imagem
 
-| Modelo | Licença | Uso comercial | Fonte verificada |
-|---|---|---|---|
-| `black-forest-labs/FLUX.1-schnell` | Apache-2.0 | ✅ Sim | model card HF (`license: apache-2.0`) |
-| `stabilityai/stable-diffusion-3.5-medium` | Stability AI Community License | 🟡 Sim, se receita anual < US$1M | model card HF — condição a reconferir se o canal crescer |
-| `stabilityai/stable-diffusion-3.5-large` | Stability AI Community License | 🟡 Sim, se receita anual < US$1M | model card HF — condição a reconferir se o canal crescer |
+Servidos pelo **InvokeAI** da máquina (`~/invokeai`, mantido pelo ai-stack), que o pipeline chama
+por HTTP (`servicos/invokeai.py`). Nenhum peso de imagem roda no processo do pipeline.
 
-Roda na venv isolada `.venv-imagem`, nunca no processo do pipeline — ver `video/_imagem_runner.py`.
+| Modelo (nome no InvokeAI) | Origem do arquivo | Licença | Uso comercial | Fonte verificada |
+|---|---|---|---|---|
+| FLUX.1 schnell (quantized) | `InvokeAI/flux_schnell` (NF4 do `black-forest-labs/FLUX.1-schnell`) | Apache-2.0 | ✅ Sim | model cards HF (`license: apache-2.0`), 2026-10-02 |
+| FLUX.1-schnell_ae (VAE) | `black-forest-labs/FLUX.1-schnell::ae.safetensors` | Apache-2.0 | ✅ Sim | model card HF |
+| T5-XXL / CLIP-L (video-factory) | `text_encoder_2`/`text_encoder` do `black-forest-labs/FLUX.1-schnell`, por symlink em `~/ai/hf` | Apache-2.0 (repo do schnell) | ✅ Sim | model card HF |
+| Qwen Image Edit 2511 (Q4_K_M) | `unsloth/Qwen-Image-Edit-2511-GGUF` (GGUF do `Qwen/Qwen-Image-Edit-2511`) | Apache-2.0 | ✅ Sim | model cards HF (`license: apache-2.0`, "Qwen-Image is licensed under Apache 2.0"), 2026-10-02 |
+| Qwen Image VAE | `Qwen/Qwen-Image-Edit-2511::vae` | Apache-2.0 | ✅ Sim | model card HF, 2026-10-02 |
+| Qwen Image Edit Lightning (4-step, bf16) | `lightx2v/Qwen-Image-Edit-2511-Lightning` | Apache-2.0 | ✅ Sim | model card HF (`license: apache-2.0`), 2026-10-02 |
+| Qwen2.5-VL Encoder (fp8 scaled) | `Comfy-Org/Qwen-Image_ComfyUI` (fp8 do `Qwen/Qwen2.5-VL-7B-Instruct`) | Apache-2.0 | ✅ Sim | model cards HF (os dois `license: apache-2.0`), 2026-10-02 — atenção: o Qwen2.5-VL **3B e 72B** têm licença própria, só o 7B é Apache |
+
 **Nenhum peso é usado sem revisar o resultado**: `gerar()` só produz rascunhos descartáveis em
 `cache/imagens/`; a curadoria (`imagem-aprovar`) é o operador escolhendo o que entra em
-`assets/slides/`, não uma etapa automática.
+`assets/slides/`, não uma etapa automática. A exceção deliberada é o preset `sincronizado`, em que
+a revisão humana foi trocada por QA automático (`video/imagem_qa.py`) por decisão do operador.
+
+**SD3.5 saiu do pipeline em 2026-10-02**, junto com a venv de diffusers (`.venv-imagem`): os pesos
+nunca chegaram a ser baixados nesta máquina. A linha fica no histórico — Stability AI Community
+License, comercial só abaixo de US$1M de receita anual; reconferir se voltar via InvokeAI.
+
+### Modelo auxiliar de QA (não gera conteúdo)
+
+| Modelo | Licença | Uso | Fonte verificada |
+|---|---|---|---|
+| `openai/clip-vit-base-patch32` | MIT (repo `openai/CLIP`) | 🟡 Só como filtro interno: nota de relevância e foto-vs-ilustração no preset `sincronizado` | repo GitHub (MIT), 2026-10-02 |
+
+🟡 O model card do CLIP declara "**any** deployed use case of the model — whether commercial or
+not — is currently out of scope" e o recomenda para pesquisa. É recomendação do card, não termo
+da licença MIT; e aqui ele não produz nada que vá ao ar — só decide qual candidato do FLUX
+descartar. Registrado para a decisão ficar visível: se isso incomodar, a alternativa é um
+classificador com licença sem ressalva (ou voltar à curadoria humana).
 
 Não usado para teste cujo áudio venha a ser publicado: `FLUX.1-**dev**` (licença não-comercial da
 Black Forest Labs) fica fora do pipeline por esse motivo, mesmo tendo qualidade superior ao
@@ -84,6 +107,9 @@ Black Forest Labs) fica fora do pipeline por esse motivo, mesmo tendo qualidade 
 | XTTS-v2 (Coqui) | CPML | Não-comercial |
 | IndexTTS-2 | Restritiva | Comercial exige contato com os autores |
 | `black-forest-labs/FLUX.1-dev` | Não-comercial (BFL) | Melhor qualidade que o `schnell`, mas licença não permite monetização sem acordo à parte |
+| `black-forest-labs/FLUX.1-Kontext-dev` | FLUX.1 [dev] Non-Commercial License | Edição com referência; seria o caminho óbvio para consistência de personagem na HQ — fica fora, o Qwen-Image-Edit (Apache-2.0) faz o papel. Verificado 2026-10-02 |
+| `black-forest-labs/FLUX.1-Fill-dev` | FLUX.1 [dev] Non-Commercial License | Inpainting. O card diz que as **saídas** podem ser usadas comercialmente, mas os pesos estão sob a licença NC — fica fora pelo mesmo critério do `dev`. Verificado 2026-10-02 |
+| `black-forest-labs/FLUX.2-klein-9B` | FLUX Non-Commercial License | Verificado 2026-10-02. (O Klein **4B** é outro caso — conferir o card antes de cogitar.) |
 
 **Não usar nem para teste cujo áudio venha a ser publicado.**
 
@@ -94,10 +120,18 @@ Black Forest Labs) fica fora do pipeline por esse motivo, mesmo tendo qualidade 
 | `chatterbox-tts` (código) | MIT | — |
 | `acestep` (código) | Apache-2.0 | Geração da trilha, em venv separada |
 | `transformers` (código, MusicGen) | Apache-2.0 | Geração da trilha, em venv separada (`.venv-musica-mg`) |
-| `diffusers` (código) | Apache-2.0 | Geração de imagem (FLUX/SD3.5), em venv separada |
+| InvokeAI 6.14 (código) | Apache-2.0 (+ licenças de componentes no repo) | Servidor de geração de imagem, chamado por HTTP — não é importado nem redistribuído. Verificado 2026-10-02 |
+| `diffusers` (código) | Apache-2.0 | Usado até 2026-10-02 na `.venv-imagem`, aposentada em favor do InvokeAI |
+| `transformers` (código, CLIP de QA) | Apache-2.0 | No processo do pipeline, só para o CLIP do `imagem_qa` |
 | PyTorch | BSD-3 | wheels cu130 |
 | faster-whisper / CTranslate2 | MIT | QA por ASR |
 | FFmpeg | LGPL/GPL conforme build | Usado como ferramenta, não redistribuído |
+
+## Fontes tipográficas
+
+| Fonte | Licença | Uso | Nota |
+|---|---|---|---|
+| Comic Neue Bold (`spikes/hq/fonts/ComicNeue-Bold.ttf`) | SIL Open Font License 1.1 | Letreiramento da HQ | `OFL.txt` acompanha o arquivo; uso comercial e embutir em PDF permitidos, vender a fonte sozinha não |
 
 ## Watermark
 
