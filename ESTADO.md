@@ -76,9 +76,10 @@ Modelos ficam em `models/` (aponte `HF_HOME` para lá).
 ## Pasta e repositório: `~/dev/genai` (2026-10-03)
 
 A pasta `~/dev/video-factory` virou **`~/dev/genai`**, e o repositório no GitHub virou
-**`moisessalgado/genai`** (o GitHub redireciona a URL antiga). `~/dev/video-factory` ficou
-como **symlink de transição** para `~/dev/genai`; apague quando nada mais apontar para ele
-(o `iam voice` do ai-stack é o último). Na mudança: a `.venv` teve os caminhos reescritos e o
+**`moisessalgado/genai`** (o GitHub redireciona a URL antiga). O symlink de transição
+`~/dev/video-factory` saiu no mesmo dia, depois que o `iam voice` passou a apontar para
+`~/dev/genai` e os `wav_path` dos `state.db` em `projects/` foram reescritos para o caminho
+novo. Na mudança: a `.venv` teve os caminhos reescritos e o
 `genai` reinstalado em modo editável (`uv sync --inexact --reinstall-package genai`), e o
 `fonte:` dos `project.yaml` passou para o caminho novo (três ainda apontavam para
 `~/dev/audio-factory`). Os nomes `T5-XXL (video-factory)`/`CLIP-L (video-factory)` no InvokeAI
