@@ -24,7 +24,7 @@ def test_padroes_reproduzem_o_layout_de_sempre(tmp_path):
     assert s.projects_dir == r / "projects"
     assert s.hf_home == r / "models"
     assert s.ace_checkpoint == r / "models" / "ace-step"
-    assert s.venv_imagem == r / ".venv-imagem"
+    assert s.venv_musica == r / ".venv-musica"
     assert s.llm_url == "http://localhost:11434"
     assert s.llm_modelo == "gemma4:12b"
     assert set(s.origem.values()) == {"padrão"}
@@ -38,12 +38,12 @@ def test_hf_home_do_ambiente_vence_o_padrao(tmp_path):
 
 def test_arquivo_vence_hf_home_e_relativo_e_da_raiz(tmp_path):
     f = _toml(tmp_path, '[caminhos]\nhf_home = "pesos"\nprojects = "~/p"\n'
-                        '[venvs]\nimagem = "/opt/envs/imagem"\n'
+                        '[venvs]\nmusica = "/opt/envs/musica"\n'
                         '[servicos]\nllm_url = "http://litellm:4000"\n')
     s = config.carregar(env={"HF_HOME": "/srv/hf"}, arquivo=f)
     assert s.hf_home == config.RAIZ_PADRAO / "pesos"
     assert s.projects_dir == Path("~/p").expanduser()
-    assert s.venv_imagem == Path("/opt/envs/imagem")
+    assert s.venv_musica == Path("/opt/envs/musica")
     assert s.llm_url == "http://litellm:4000"
     assert s.origem["hf_home"] == "vf.toml"
     assert s.origem["cache_dir"] == "padrão"

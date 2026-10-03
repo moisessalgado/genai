@@ -9,6 +9,7 @@ from click.core import ParameterSource
 from rich.table import Table
 
 from .. import project as proj_mod
+from ..config import settings
 from ._comum import _proj, console
 from .app import app
 
@@ -143,7 +144,7 @@ def _etapa_video(p: Path, cfg: dict, *, preset: str = "slides",
     if preset == "sincronizado" and capa is None:
         from ..video import imagem as imagem_mod
         if not imagem_mod.disponivel():
-            console.print(f"[red]venv de imagem ausente:[/] {imagem_mod.VENV} — "
+            console.print(f"[red]InvokeAI fora do ar:[/] {settings().invokeai_url} — "
                           "preset sincronizado precisa gerar imagem")
             raise typer.Exit(1)
 
@@ -246,7 +247,7 @@ def _etapa_video(p: Path, cfg: dict, *, preset: str = "slides",
                 raise typer.Exit(1)
             destino_imgs = (p / "cache" / "imagens-sincronizadas" /
                            master.stem.replace("-master", ""))
-            with console.status("gerando imagens sincronizadas (Ollama + FLUX)…") as st:
+            with console.status("gerando imagens sincronizadas (Ollama + InvokeAI)…") as st:
                 sincronizado_plano = sincronizado_mod.plano(
                     srt, destino_imgs, duracao(audio),
                     janela_s=janela_imagem, n_candidatos=imagens_candidatas,
@@ -309,14 +310,12 @@ def musica(paleta: str = typer.Option("contemplativo",
 @app.command()
 def imagem(prompt: str = typer.Argument(None, help="prompt livre"),
           arquivo: Path = typer.Option(None, help="um prompt por linha, para lote"),
-          modelo: str = typer.Option("flux", help="flux, sd ou sd:large"),
+          modelo: str = typer.Option("flux", help="flux (FLUX.1-schnell no InvokeAI)"),
           n: int = typer.Option(4, help="variações por prompt"),
           largura: int = typer.Option(None, help="padrão: 1344 (~16:9)"),
           altura: int = typer.Option(None, help="padrão: 768 (~16:9)"),
-          passos: int = typer.Option(None, help="padrão depende do modelo"),
-          guidance: float = typer.Option(None, help="padrão depende do modelo"),
-          negativo: str = typer.Option(None,
-              help="negative prompt — só tem efeito com --modelo sd/sd:large")):
+          passos: int = typer.Option(None, help="padrão: 4 (schnell é destilado)"),
+          guidance: float = typer.Option(None, help="padrão: 0 (schnell não faz CFG)")):
     """Gera candidatos em cache/imagens/, para revisar antes de `imagem-aprovar`.
 
     Não escreve direto no acervo: nem toda imagem gerada presta, e curadoria é
@@ -333,13 +332,13 @@ def imagem(prompt: str = typer.Argument(None, help="prompt livre"),
         console.print(f"[red]{e}[/]")
         raise typer.Exit(1)
     if not img.disponivel():
-        console.print(f"[red]venv de imagem ausente:[/] {img.VENV} — veja ESTADO.md")
+        console.print(f"[red]InvokeAI fora do ar:[/] {settings().invokeai_url} — "
+                      "suba o serviço (ai-stack) ou ajuste `invokeai_url` no vf.toml")
         raise typer.Exit(1)
 
     prompts = ([prompt] if prompt is not None else
                [l.strip() for l in arquivo.read_text(encoding="utf-8").splitlines() if l.strip()])
-    kwargs = {"modelo": modelo, "n": n, "passos": passos, "guidance": guidance,
-              "negative": negativo}
+    kwargs = {"modelo": modelo, "n": n, "passos": passos, "guidance": guidance}
     if largura is not None:
         kwargs["largura"] = largura
     if altura is not None:

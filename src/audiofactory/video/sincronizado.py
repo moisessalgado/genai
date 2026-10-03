@@ -21,9 +21,10 @@ from urllib import error, request
 from . import imagem as imagem_mod
 from . import imagem_qa
 from . import slides as slides_mod
+from ..config import settings
 from ..narration.llm import OLLAMA_URL
 
-MODELO_OLLAMA = "gemma4:12b"
+MODELO_OLLAMA = settings().llm_modelo
 
 # ~10s por janela: pequeno o bastante para acompanhar a historia, grande o
 # bastante para uma janela sempre conter pelo menos uma cue inteira de legenda
@@ -268,8 +269,8 @@ def gerar_imagens(janelas: list[Janela], destino_dir: Path, *,
         raise ValueError(
             f"{len(prompts_prontos)} prompts prontos para {len(janelas)} janelas")
     destino_dir.mkdir(parents=True, exist_ok=True)
-    repo, familia = imagem_mod.resolver_modelo(modelo)
-    passos, guidance = imagem_mod._defaults(familia, None, None)
+    imagem_mod.resolver_modelo(modelo)
+    passos, guidance = imagem_mod._defaults(None, None)
 
     prompts: list[str] = []
     veio_llm: list[bool] = []
@@ -303,9 +304,9 @@ def gerar_imagens(janelas: list[Janela], destino_dir: Path, *,
 
     if progresso:
         progresso(f"gerando {len(pendentes)} imagens em lote ({modelo})…")
-    notas, estilos = imagem_mod._rodar(
-        pendentes, repo, familia, avaliar_clip=n_candidatos > 1,
-        avaliar_estilo=True) if pendentes else ({}, {})
+    notas, estilos = imagem_mod.gerar_lote(
+        pendentes, avaliar_clip=n_candidatos > 1, avaliar_estilo=True,
+        progresso=progresso) if pendentes else ({}, {})
 
     resultado: list[tuple[Path | None, bool]] = []
     rejeitadas_foto = 0

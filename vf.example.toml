@@ -16,7 +16,6 @@
 
 [venvs]
 # Runners isolados (subprocesso que troca JSON/arquivo; nenhum objeto atravessa).
-# imagem    = ".venv-imagem"
 # musica    = ".venv-musica"     # ACE-Step
 # musica_mg = ".venv-musica-mg"  # MusicGen
 

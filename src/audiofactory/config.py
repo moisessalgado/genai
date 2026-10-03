@@ -3,7 +3,7 @@
 Antes, cada módulo deduzia a raiz do repositório (`parents[2]`, `parents[3]`) e
 montava `RAIZ / "models"`, `RAIZ / ".venv-imagem"`, a URL do Ollama etc. por
 conta própria. Agora tudo sai daqui, e trocar um caminho (por exemplo, as venvs
-para `~/ai/envs`) é editar um arquivo, não o código.
+isoladas de música) é editar um arquivo, não o código.
 
 Precedência, do mais fraco ao mais forte:
 
@@ -35,7 +35,6 @@ _SECOES: dict[str, tuple[str, str]] = {
     "books_dir": ("caminhos", "books"),
     "config_dir": ("caminhos", "config"),
     "hf_home": ("caminhos", "hf_home"),
-    "venv_imagem": ("venvs", "imagem"),
     "venv_musica": ("venvs", "musica"),
     "venv_musica_mg": ("venvs", "musica_mg"),
     "llm_url": ("servicos", "llm_url"),
@@ -53,7 +52,6 @@ _PADROES: dict[str, str] = {
     "books_dir": "books",
     "config_dir": "config",
     "hf_home": "models",
-    "venv_imagem": ".venv-imagem",
     "venv_musica": ".venv-musica",
     "venv_musica_mg": ".venv-musica-mg",
     "llm_url": "http://localhost:11434",
@@ -73,7 +71,6 @@ class Settings:
     books_dir: Path
     config_dir: Path
     hf_home: Path
-    venv_imagem: Path
     venv_musica: Path
     venv_musica_mg: Path
     llm_url: str

@@ -372,7 +372,7 @@
      "multiplo": false,
      "padrao": "flux",
      "flag": false,
-     "ajuda": "flux, sd ou sd:large"
+     "ajuda": "flux (FLUX.1-schnell no InvokeAI)"
     },
     {
      "nome": "n",
@@ -428,7 +428,7 @@
      "multiplo": false,
      "padrao": null,
      "flag": false,
-     "ajuda": "padrão depende do modelo"
+     "ajuda": "padrão: 4 (schnell é destilado)"
     },
     {
      "nome": "guidance",
@@ -442,21 +442,7 @@
      "multiplo": false,
      "padrao": null,
      "flag": false,
-     "ajuda": "padrão depende do modelo"
-    },
-    {
-     "nome": "negativo",
-     "tipo": "option",
-     "click_tipo": "str",
-     "opts": [
-      "--negativo"
-     ],
-     "secundarias": [],
-     "obrigatorio": false,
-     "multiplo": false,
-     "padrao": null,
-     "flag": false,
-     "ajuda": "negative prompt — só tem efeito com --modelo sd/sd:large"
+     "ajuda": "padrão: 0 (schnell não faz CFG)"
     }
    ]
   },

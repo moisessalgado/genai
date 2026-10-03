@@ -28,9 +28,24 @@ DESVIO_MINIMO = 8.0
 LIMIAR_FOTO = 0.0
 
 
+# Ancoras fixas para o QA de estilo: a diferenca de similaridade CLIP entre a
+# imagem e cada uma diz se ela pendeu para foto real em vez de desenho — sem
+# olho humano, e o unico sinal barato que temos de que o FLUX ignorou o pedido
+# de estilo "storybook illustration" (medido: acontece sobretudo em prompts
+# com pessoas, onde o modelo tende a foto-realismo mesmo com o estilo pedido).
+ANCORA_FOTO = "a realistic photograph of a real person"
+ANCORA_ILUSTRACAO = "a hand-drawn cartoon illustration from a children's picture book, flat colors"
+
+# CLIP pequeno, na CPU do processo principal (o `transformers` ja vem com o
+# chatterbox). Morava no runner da antiga `.venv-imagem`; medido em 18 imagens
+# reais do Narizinho, as notas dos dois ambientes diferem em < 3e-4 e todas as
+# decisoes foto/ilustracao coincidem — o LIMIAR_FOTO nao precisou de ajuste.
+MODELO_CLIP = "openai/clip-vit-base-patch32"
+_clip = None
+
+
 def eh_fotorealista(pontuacao: float, limiar: float = LIMIAR_FOTO) -> bool:
-    """`pontuacao` e a diferenca foto-ilustracao calculada por
-    `_imagem_runner._pontuar` (ver `avaliar_estilo`)."""
+    """`pontuacao` e a diferenca foto-ilustracao calculada por `pontuar`."""
     return pontuacao > limiar
 
 
@@ -59,3 +74,61 @@ def escolher_melhor(candidatos: list[Path], pontuacoes: dict[Path, float] | None
     if pontuacoes:
         validos.sort(key=lambda c: pontuacoes.get(c, 0.0), reverse=True)
     return validos[0]
+
+
+def _carregar_clip():
+    global _clip
+    if _clip is None:
+        from transformers import CLIPModel, CLIPProcessor
+        from transformers.utils import logging as tlog
+
+        # No runner antigo isto ia para um stdout capturado; aqui sujaria o
+        # `console.status` da CLI com a barra de carga e o relatorio de pesos.
+        tlog.set_verbosity_error()
+        tlog.disable_progress_bar()
+        modelo = CLIPModel.from_pretrained(MODELO_CLIP)
+        modelo.eval()
+        _clip = (modelo, CLIPProcessor.from_pretrained(MODELO_CLIP))
+    return _clip
+
+
+def pontuar(itens: list[tuple[Path, str]], *, relevancia: bool, estilo: bool
+            ) -> tuple[dict[str, float], dict[str, float]]:
+    """Notas CLIP de cada (imagem, prompt) que existe em disco: relevancia ao
+    prompt e diferenca foto-menos-ilustracao. Chaveadas pelo caminho em texto.
+
+    Um carregamento do CLIP para as duas notas. `relevancia` so serve para
+    ESCOLHER a melhor entre candidatos da mesma janela — quem aprova ou
+    reprova e `nao_e_vazia`/`eh_fotorealista`.
+
+    A forward completa do modelo (`modelo(**entradas)`), e nao
+    `get_text_features`/`get_image_features`: esses chegaram a devolver o
+    output cru do encoder, sem a projecao, numa versao de transformers.
+    """
+    if not (relevancia or estilo):
+        return {}, {}
+    import torch
+
+    modelo, processador = _carregar_clip()
+    notas_relevancia: dict[str, float] = {}
+    notas_estilo: dict[str, float] = {}
+    with torch.no_grad():
+        for caminho, prompt in itens:
+            if not caminho.exists():
+                continue
+            with Image.open(caminho) as im:
+                imagem = im.convert("RGB")
+            textos = [prompt[:300]] if relevancia else []
+            offset_estilo = len(textos)
+            if estilo:
+                textos += [ANCORA_FOTO, ANCORA_ILUSTRACAO]
+            entradas = processador(text=textos, images=[imagem], return_tensors="pt",
+                                   padding=True, truncation=True)
+            saida = modelo(**entradas)
+            sims = torch.nn.functional.cosine_similarity(
+                saida.image_embeds, saida.text_embeds).tolist()
+            if relevancia:
+                notas_relevancia[str(caminho)] = sims[0]
+            if estilo:
+                notas_estilo[str(caminho)] = sims[offset_estilo] - sims[offset_estilo + 1]
+    return notas_relevancia, notas_estilo

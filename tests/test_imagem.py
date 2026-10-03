@@ -1,9 +1,9 @@
-"""Geração local de imagem (FLUX/SD3.5): o que dá para verificar sem a GPU.
+"""Geração de imagem (FLUX via InvokeAI): o que dá para verificar sem a GPU.
 
-A geração em si não é testável aqui — depende de dezenas de GB de pesos e de
-placa. O que é testável é tudo o que fica *ao redor* dela: resolução de
-modelo, defaults por família, determinismo da seed, o atalho de cache e a
-conversão para o formato do acervo. Mesma filosofia de `test_musica_ace.py`.
+A geração em si é do InvokeAI (`test_invokeai.py` cobre o cliente). O que é
+testável aqui é tudo o que fica *ao redor* dela: resolução de modelo,
+defaults, determinismo da seed, o atalho de cache e a conversão para o
+formato do acervo. Mesma filosofia de `test_musica_ace.py`.
 """
 from __future__ import annotations
 
@@ -20,45 +20,24 @@ from audiofactory.video import imagem as img
 
 # --- resolução de modelo ------------------------------------------------------
 
-def test_resolve_flux():
-    assert img.resolver_modelo("flux") == ("black-forest-labs/FLUX.1-schnell", "flux")
-
-
-def test_resolve_sd_padrao_e_medium():
-    repo, familia = img.resolver_modelo("sd")
-    assert "medium" in repo
-    assert familia == "sd3"
-
-
-def test_resolve_sd_large():
-    repo, familia = img.resolver_modelo("sd:large")
-    assert "large" in repo
-    assert familia == "sd3"
+def test_resolve_flux_para_o_modelo_do_invokeai():
+    assert img.resolver_modelo("flux") == "FLUX.1 schnell (quantized)"
 
 
 def test_modelo_desconhecido_e_recusado():
     with pytest.raises(ValueError, match="modelo desconhecido"):
-        img.resolver_modelo("midjourney")
+        img.resolver_modelo("sd")
 
 
-# --- defaults por família -----------------------------------------------------
+# --- defaults -----------------------------------------------------------------
 
 def test_defaults_flux_sao_poucos_passos_sem_guidance():
     """FLUX-schnell é destilado: guidance != 0 não faz CFG nenhum, só custa tempo."""
-    passos, guidance = img._defaults("flux", None, None)
-    assert passos == 4
-    assert guidance == 0.0
-
-
-def test_defaults_sd3_sao_convencionais():
-    passos, guidance = img._defaults("sd3", None, None)
-    assert passos >= 20
-    assert guidance > 0
+    assert img._defaults(None, None) == (4, 0.0)
 
 
 def test_defaults_explicitos_sobrepoem():
-    passos, guidance = img._defaults("flux", 10, 3.5)
-    assert (passos, guidance) == (10, 3.5)
+    assert img._defaults(10, 3.5) == (10, 3.5)
 
 
 # --- seed ----------------------------------------------------------------------
@@ -81,31 +60,77 @@ def test_gerar_pula_destinos_que_ja_existem(tmp_path, monkeypatch):
     for i in range(2):
         (tmp_path / f"flux-{marca}-{img._seed(prompt, i)}.png").write_bytes(b"x")
 
-    with patch.object(img, "_rodar") as rodar:
+    with patch.object(img, "gerar_lote") as lote:
         destinos = img.gerar(prompt, modelo="flux", n=2)
-        rodar.assert_not_called()
+        lote.assert_not_called()
     assert len(destinos) == 2
     assert all(d.exists() for d in destinos)
 
 
-def test_gerar_chama_rodar_so_para_os_pendentes(tmp_path, monkeypatch):
+def test_gerar_pede_ao_lote_so_os_pendentes(tmp_path, monkeypatch):
     monkeypatch.setattr(img, "CACHE", tmp_path)
     monkeypatch.setattr(img, "disponivel", lambda: True)
     prompt = "retrato histórico"
+    marca = __import__("hashlib").sha256(prompt.encode()).hexdigest()[:8]
+    (tmp_path / f"flux-{marca}-{img._seed(prompt, 0)}.png").write_bytes(b"x")
 
-    with patch.object(img, "_rodar") as rodar:
+    with patch.object(img, "gerar_lote") as lote:
         img.gerar(prompt, modelo="flux", n=3)
-        rodar.assert_called_once()
-        pendentes, repo, familia = rodar.call_args[0]
-        assert len(pendentes) == 3
-        assert repo == "black-forest-labs/FLUX.1-schnell"
-        assert familia == "flux"
+        (pendentes,), _ = lote.call_args
+    assert [p["seed"] for p in pendentes] == [img._seed(prompt, 1), img._seed(prompt, 2)]
+    assert all((p["passos"], p["guidance"]) == (4, 0.0) for p in pendentes)
+    assert all((p["largura"], p["altura"]) == (1344, 768) for p in pendentes)
 
 
-def test_gerar_sem_venv_e_recusado(monkeypatch):
+def test_gerar_sem_invokeai_e_recusado(monkeypatch):
     monkeypatch.setattr(img, "disponivel", lambda: False)
-    with pytest.raises(RuntimeError, match="venv de imagem ausente"):
+    with pytest.raises(RuntimeError, match="InvokeAI fora do ar"):
         img.gerar("qualquer coisa")
+
+
+class _ClienteFalso:
+    def __init__(self):
+        self.pedidos = []
+
+    def grafo_flux(self, prompt, largura, altura, seed, passos, guidance):
+        return ({"prompt": prompt, "seed": seed}, [])
+
+    def gerar_lote(self, grafos, progresso=None):
+        for g, destino in grafos:
+            self.pedidos.append(g[0])
+            _png(destino)
+
+
+def test_gerar_lote_gera_so_o_que_falta_e_pontua_tudo(tmp_path, monkeypatch):
+    falso = _ClienteFalso()
+    monkeypatch.setattr(img, "disponivel", lambda: True)
+    monkeypatch.setattr(img.invokeai, "cliente", lambda: falso)
+    chamados = {}
+
+    def pontuar(itens, relevancia, estilo):
+        chamados["itens"] = itens
+        return {str(c): 0.3 for c, _ in itens}, {str(c): -0.1 for c, _ in itens}
+
+    monkeypatch.setattr(img.imagem_qa, "pontuar", pontuar)
+    existe = _png(tmp_path / "a.png")
+    pedidos = [{"prompt": p, "seed": s, "destino": str(d), "largura": 64, "altura": 64,
+                "passos": 4, "guidance": 0.0}
+               for p, s, d in (("um", 1, existe), ("dois", 2, tmp_path / "b.png"))]
+
+    notas, estilos = img.gerar_lote(pedidos, avaliar_clip=True, avaliar_estilo=True)
+    assert falso.pedidos == [{"prompt": "dois", "seed": 2}]
+    assert [c for c, _ in chamados["itens"]] == [existe, tmp_path / "b.png"]
+    assert notas[str(existe)] == 0.3 and estilos[str(tmp_path / "b.png")] == -0.1
+
+
+def test_gerar_lote_sem_avaliacao_nao_carrega_o_clip(tmp_path, monkeypatch):
+    monkeypatch.setattr(img, "disponivel", lambda: True)
+    monkeypatch.setattr(img.invokeai, "cliente", lambda: _ClienteFalso())
+    monkeypatch.setattr(img.imagem_qa, "pontuar",
+                        lambda *a, **k: (_ for _ in ()).throw(AssertionError("CLIP")))
+    pedidos = [{"prompt": "x", "seed": 1, "destino": str(tmp_path / "x.png"), "largura": 64,
+                "altura": 64, "passos": 4, "guidance": 0.0}]
+    assert img.gerar_lote(pedidos) == ({}, {})
 
 
 # --- aprovar(): conversão para o acervo ----------------------------------------

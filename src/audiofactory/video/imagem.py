@@ -1,10 +1,9 @@
-"""Geração local de imagens (FLUX + Stable Diffusion) para o acervo de slides.
+"""Geração de imagens (FLUX.1-schnell, via InvokeAI) para o acervo de slides.
 
-Mesmo desenho de `audio/musica_ace.py`, e pelo mesmo motivo: os pesos de imagem
-não convivem com as versões de `torch`/`transformers` fixadas pelo resto do
-pipeline, então o modelo roda numa venv isolada (`.venv-imagem`) atrás de uma
-ponte por subprocesso que troca só JSON e arquivo em disco
-(`_imagem_runner.py`) — nenhum objeto Python atravessa a fronteira.
+A geração roda no InvokeAI da máquina (mantido pelo ai-stack), por HTTP —
+`servicos/invokeai.py`. Antes era uma venv de diffusers isolada atrás de um
+subprocesso (`.venv-imagem`), com o FLUX em bf16 e offload sequencial; o
+InvokeAI serve o mesmo modelo quantizado (NF4), já carregado, com fila.
 
 Uma diferença importa em relação à música: a paleta inteira da trilha vira
 acervo automaticamente, mas nem toda imagem gerada presta — precisa de
@@ -17,15 +16,13 @@ faixa já usada nas imagens do Midjourney) e move para `assets/slides/`.
 from __future__ import annotations
 
 import hashlib
-import json
 import subprocess
-import tempfile
 from pathlib import Path
 
 from ..config import settings
+from ..servicos import invokeai
+from . import imagem_qa
 from .slides import DIRETORIO_PADRAO
-
-VENV = settings().venv_imagem
 
 # Mesma divisão de `assets/musica` vs `cache/musica`: o que pode ser apagado
 # sem consequência (rascunho, custa só GPU) de um lado, o acervo do canal do
@@ -34,33 +31,28 @@ VENV = settings().venv_imagem
 CACHE = settings().cache_dir / "imagens"
 ACERVO = DIRETORIO_PADRAO
 
-# "flux" e "sd" (SD3.5-Medium, cabe em 16 GB sem offload) cobrem o uso comum;
-# "sd:large" abre para SD3.5-Large (mais VRAM, precisa de model_cpu_offload) —
-# mesmo padrão de sufixo que `musica_ace` usa para escolher paleta ("ace:sobrio").
+# Apelido na linha de comando -> modelo registrado no InvokeAI.
 #
 # FLUX.1-**schnell**, não o `dev`: schnell é Apache-2.0, dev é licença
 # não-comercial da Black Forest Labs — decisão do operador, ver LICENSES.md.
-MODELOS: dict[str, tuple[str, str]] = {
-    "flux": ("black-forest-labs/FLUX.1-schnell", "flux"),
-    "sd": ("stabilityai/stable-diffusion-3.5-medium", "sd3"),
-    "sd:large": ("stabilityai/stable-diffusion-3.5-large", "sd3"),
+# O SD3.5 (`sd`, `sd:large`) saiu junto com a venv de diffusers: os pesos nunca
+# chegaram a ser baixados nesta máquina. Para voltar, instale-o no InvokeAI e
+# acrescente o grafo em `servicos/invokeai.py`.
+MODELOS: dict[str, str] = {
+    "flux": invokeai.FLUX_SCHNELL,
 }
 
-# Passos e guidance por FAMÍLIA, não por modelo: as duas famílias são
-# incompatíveis entre si. FLUX-schnell é destilado por passo-de-tempo — poucos
-# passos bastam, e `guidance_scale` diferente de 0 não faz CFG nenhum, só
-# desperdiça tempo (a rede não foi treinada para usar). SD3.5 é convencional:
-# precisa de mais passos e de CFG de verdade para não sair borrado/genérico.
-_PADRAO_FAMILIA = {
-    "flux": (4, 0.0),
-    "sd3": (28, 4.5),
-}
+# FLUX-schnell é destilado por passo-de-tempo: poucos passos bastam, e
+# guidance diferente de 0 não faz CFG nenhum (a rede não foi treinada para
+# usar) — só desperdiça tempo.
+PASSOS_PADRAO = 4
+GUIDANCE_PADRAO = 0.0
 
-# Resolução ~16:9 (múltiplo de 16, como os dois modelos exigem) em vez de
-# quadrada: mais perto do formato final do vídeo do que o acervo atual do
-# Midjourney, ainda dentro do bucket de resolução em que os dois foram
-# treinados. `slides.py` já sabe preencher com blur o que sobrar, então nada
-# quebra para quem preferir gerar quadrado.
+# Resolução ~16:9 (múltiplo de 16, como o FLUX exige) em vez de quadrada:
+# mais perto do formato final do vídeo do que o acervo atual do Midjourney,
+# ainda dentro do bucket de resolução em que o modelo foi treinado.
+# `slides.py` já sabe preencher com blur o que sobrar, então nada quebra para
+# quem preferir gerar quadrado.
 LARGURA_PADRAO = 1344
 ALTURA_PADRAO = 768
 
@@ -69,19 +61,19 @@ Q_JPEG_ACERVO = "2"
 
 
 def disponivel() -> bool:
-    """A venv isolada existe? Sem ela, `imagem` não tem como rodar."""
-    return (VENV / "bin" / "python").exists()
+    """O InvokeAI responde? Sem ele, `imagem` não tem como rodar."""
+    return invokeai.cliente().disponivel()
 
 
-def resolver_modelo(modelo: str) -> tuple[str, str]:
+def resolver_modelo(modelo: str) -> str:
     if modelo not in MODELOS:
         raise ValueError(f"modelo desconhecido: {modelo} — use {', '.join(MODELOS)}")
     return MODELOS[modelo]
 
 
-def _defaults(familia: str, passos: int | None, guidance: float | None) -> tuple[int, float]:
-    p, g = _PADRAO_FAMILIA[familia]
-    return (passos if passos is not None else p, guidance if guidance is not None else g)
+def _defaults(passos: int | None, guidance: float | None) -> tuple[int, float]:
+    return (passos if passos is not None else PASSOS_PADRAO,
+            guidance if guidance is not None else GUIDANCE_PADRAO)
 
 
 def _seed(prompt: str, i: int) -> int:
@@ -92,30 +84,25 @@ def _seed(prompt: str, i: int) -> int:
     return int.from_bytes(h[:4], "big")
 
 
+def _erro_indisponivel() -> RuntimeError:
+    return RuntimeError(f"InvokeAI fora do ar em {settings().invokeai_url} — "
+                        "suba o serviço (ai-stack) ou ajuste `invokeai_url` no vf.toml")
+
+
 def gerar(prompt: str, modelo: str = "flux", n: int = 4,
           largura: int = LARGURA_PADRAO, altura: int = ALTURA_PADRAO,
           passos: int | None = None, guidance: float | None = None,
-          negative: str | None = None,
           progresso=None) -> list[Path]:
     """Gera (ou reaproveita) `n` candidatos para `prompt`, em `CACHE`.
 
     O nome do arquivo carrega o hash do prompt e a seed: reescrever o prompt
     não reaproveita silenciosamente um arquivo antigo com o nome antigo — a
     mesma armadilha já documentada em `musica_ace.gerar_pecas`.
-
-    `negative` só tem efeito nos modelos "sd"/"sd:large" (CFG de verdade,
-    guidance > 0) — FLUX-schnell não faz CFG (`guidance=0`), então um
-    negative_prompt aí seria só decoração; o runner descarta silenciosamente
-    nesse caso.
     """
     if not disponivel():
-        raise RuntimeError(
-            f"venv de imagem ausente em {VENV} — rode `uv venv --python 3.12 "
-            f".venv-imagem && uv pip install --python .venv-imagem/bin/python "
-            f"diffusers transformers accelerate sentencepiece protobuf torch "
-            f"torchvision --index-url https://download.pytorch.org/whl/cu130`")
-    repo, familia = resolver_modelo(modelo)
-    passos, guidance = _defaults(familia, passos, guidance)
+        raise _erro_indisponivel()
+    resolver_modelo(modelo)
+    passos, guidance = _defaults(passos, guidance)
     CACHE.mkdir(parents=True, exist_ok=True)
 
     marca = hashlib.sha256(prompt.encode()).hexdigest()[:8]
@@ -123,47 +110,39 @@ def gerar(prompt: str, modelo: str = "flux", n: int = 4,
     destinos = [CACHE / f"{prefixo}-{marca}-{_seed(prompt, i)}.png" for i in range(n)]
 
     pendentes = [{"prompt": prompt, "seed": _seed(prompt, i), "destino": str(destinos[i]),
-                  "largura": largura, "altura": altura, "passos": passos, "guidance": guidance,
-                  "negative_prompt": negative}
+                  "largura": largura, "altura": altura, "passos": passos, "guidance": guidance}
                  for i in range(n) if not destinos[i].exists()]
     if pendentes:
         if progresso:
             progresso(f"gerando {len(pendentes)} imagem(ns) com {modelo}…")
-        _rodar(pendentes, repo, familia)
+        gerar_lote(pendentes)
     return destinos
 
 
-def _rodar(pedidos: list[dict], modelo_repo: str, familia: str,
-          avaliar_clip: bool = False, avaliar_estilo: bool = False
-          ) -> tuple[dict[str, float], dict[str, float]]:
-    """Roda o lote inteiro numa unica invocacao da venv isolada — o modelo
-    carrega uma vez so, nao uma vez por prompt. `avaliar_clip` pede uma nota
-    de similaridade texto-imagem por pedido (usada so para desempate entre
-    candidatos da mesma janela, ver `video/sincronizado.py`); `avaliar_estilo`
-    pede a nota foto-vs-ilustracao usada para rejeitar candidatos
-    fotorrealistas demais (`imagem_qa.eh_fotorealista`). Devolve
-    `(notas_relevancia, notas_estilo)`, cada uma vazia se nao pedida."""
-    pedido = {"pedidos": pedidos, "modelo_repo": modelo_repo, "familia": familia,
-              "hf_home": str(settings().hf_home), "avaliar_clip": avaliar_clip,
-              "avaliar_estilo": avaliar_estilo}
-    runner = Path(__file__).with_name("_imagem_runner.py")
-    with tempfile.NamedTemporaryFile("w", suffix=".json", delete=False,
-                                     encoding="utf-8") as tf:
-        json.dump(pedido, tf)
-        arquivo_pedido = Path(tf.name)
-    try:
-        r = subprocess.run([str(VENV / "bin" / "python"), str(runner), str(arquivo_pedido)],
-                           capture_output=True, text=True)
-    finally:
-        arquivo_pedido.unlink(missing_ok=True)
-    if r.returncode != 0:
-        raise RuntimeError(f"geração de imagem falhou:\n{r.stderr[-2000:]}")
-    for linha in reversed(r.stdout.splitlines()):
-        linha = linha.strip()
-        if linha.startswith("{"):
-            saida = json.loads(linha)
-            return saida.get("scores", {}), saida.get("estilos", {})
-    return {}, {}
+def gerar_lote(pedidos: list[dict], *, avaliar_clip: bool = False,
+               avaliar_estilo: bool = False, progresso=None
+               ) -> tuple[dict[str, float], dict[str, float]]:
+    """Gera cada pedido (`prompt`, `seed`, `destino`, `largura`, `altura`,
+    `passos`, `guidance`) que ainda não existe em disco, pelo InvokeAI.
+
+    `avaliar_clip` pede uma nota de similaridade texto-imagem por pedido
+    (usada só para desempate entre candidatos da mesma janela, ver
+    `video/sincronizado.py`); `avaliar_estilo` pede a nota foto-vs-ilustração
+    usada para rejeitar candidatos fotorrealistas demais
+    (`imagem_qa.eh_fotorealista`). Devolve `(notas_relevancia, notas_estilo)`,
+    chaveadas pelo `destino` em texto, cada uma vazia se não pedida."""
+    if not disponivel():
+        raise _erro_indisponivel()
+    c = invokeai.cliente()
+    grafos = [(c.grafo_flux(p["prompt"], p["largura"], p["altura"], p["seed"],
+                            passos=p["passos"], guidance=p["guidance"]), Path(p["destino"]))
+              for p in pedidos if not Path(p["destino"]).exists()]
+    if grafos:
+        c.gerar_lote(grafos, progresso=progresso)
+    if not (avaliar_clip or avaliar_estilo):
+        return {}, {}
+    return imagem_qa.pontuar([(Path(p["destino"]), p["prompt"]) for p in pedidos],
+                             relevancia=avaliar_clip, estilo=avaliar_estilo)
 
 
 def aprovar(arquivos: list[Path], slides_dir: Path = ACERVO) -> list[Path]:
