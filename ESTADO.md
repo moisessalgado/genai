@@ -44,6 +44,34 @@ Modelos ficam em `models/` (aponte `HF_HOME` para lá).
   `tests/test_cli_superficie.py` compara a árvore de comandos/opções/padrões com uma foto;
   mudança de propósito numa opção: `VF_REGRAVAR_CLI=1 uv run pytest tests/test_cli_superficie.py`.
 
+## Modelos como serviços (2026-10-02)
+
+- **Imagem vem do InvokeAI** (`http://127.0.0.1:9090`, mantido pelo ai-stack) por HTTP:
+  `src/audiofactory/servicos/invokeai.py`. A `.venv-imagem` e o runner de diffusers saíram.
+  `imagem`, `imagem-aprovar` e o preset `sincronizado` funcionam como antes; os nomes de
+  arquivo em cache não mudaram, então o que já foi gerado continua reaproveitado.
+  - FLUX.1-schnell NF4, 4 passos: **~10 s por quadro 1344×768**, contra ~17 s do diffusers
+    com offload sequencial (702 gerações do Narizinho levaram 3 h 20 min).
+  - O cliente mantém **3 itens em voo** na fila, não o lote inteiro: um processo morto no
+    meio de 700 imagens não deixa o InvokeAI gerando sozinho (a retomada é pelo destino já
+    existir, e itens órfãos seriam gerados em dobro). A cópia na galeria do InvokeAI é
+    apagada depois de baixada.
+  - **SD3.5 e `--negativo` saíram**: os pesos nunca foram baixados nesta máquina, e o
+    schnell não faz CFG.
+- **O CLIP do QA de imagem roda no processo principal** (`imagem_qa.pontuar`), na CPU. Medido
+  em 18 imagens reais do Narizinho: as notas diferem do runner antigo em < 3e-4 e as decisões
+  foto/ilustração são as mesmas — `LIMIAR_FOTO` intacto.
+- ⚠️ **O InvokeAI segura ~7 GB de VRAM ociosa** depois de gerar. O runner antigo morria e
+  soltava tudo; agora o ACE-Step estourou os 16 GB na primeira tentativa. O `run` (TTS) e os
+  runners de música chamam `empty_model_cache` antes de começar (~0,2 GB depois). Serviço fora
+  do ar não é erro.
+- **Venvs de música em `~/ai/envs`**: `musica-ace` e `musica-musicgen`, recriadas a partir de
+  `uv pip freeze` das antigas (diff vazio), receitas versionadas em `envs/*.txt`. São o padrão
+  do código; as `.venv-musica*` na raiz ficam órfãs.
+- **`hf_home` padrão é `~/ai/hf`**; o symlink `models/` sobra só por compatibilidade.
+- O TTS continua **no processo**, na `.venv` do projeto: não é runner, e mover a venv do uv
+  exigiria `UV_PROJECT_ENVIRONMENT` em toda chamada.
+
 ## Fase 0 — CONCLUÍDA ✅
 
 Benchmark real (`bench/fase0_bench.py`, dados em `bench/out/bench.json`), RTX 5060 Ti:
@@ -429,6 +457,9 @@ KF e o status é `TESTE-LOCAL-NAO-PUBLICAR`.
 
 ## Trilha de fundo: ACE-Step em venv separada
 
+> **2026-10-02:** a venv mudou para `~/ai/envs/musica-ace` (receita em `envs/musica-ace.txt`).
+> Os comandos com `.venv-musica` abaixo são o registro de como ela nasceu.
+
 A trilha sintetizada (`audio/musica.py`) soava **abstrata e sinistra** — pad de ficção científica.
 Ver `docs/TDD.md` §9.1 para o diagnóstico completo. A trilha padrão agora vem do **ACE-Step v1
 3.5B** (Apache-2.0), gerado localmente.
@@ -480,6 +511,9 @@ peças são geradas de novo; como a seed sai do nome da paleta, voltam idêntica
 
 ## Trilha de fundo: MusicGen Stereo, comparativo ao ACE-Step (2026-09-01)
 
+> **2026-10-02:** a venv mudou para `~/ai/envs/musica-musicgen` (receita em
+> `envs/musica-musicgen.txt`).
+
 O operador achou a maioria das peças do ACE-Step feia — da paleta `flauta`, só uma das seis
 sobreviveu à escuta. `audio/musica_musicgen.py` traz o **MusicGen Stereo 3.3B** (Meta AudioCraft)
 como motor alternativo, mesmas paletas (mesmo nome, mesmo timbre-alvo) para comparação lado a
@@ -516,6 +550,10 @@ As peças do MusicGen entram no mesmo `assets/musica/` do ACE-Step, com prefixo 
 arquivo para não colidir — mesma divisão acervo/cache, mesmo motivo (ver seção anterior).
 
 ## Slides: geração local com FLUX + SD3.5 (2026-08-31)
+
+> **Substituído em 2026-10-02:** a geração passou para o InvokeAI e o SD3.5 saiu (ver
+> "Modelos como serviços"). A venv e o offload descritos abaixo são histórico; o fluxo
+> `imagem` → `imagem-aprovar` continua o mesmo.
 
 Antes, todo o acervo de `assets/slides/` vinha do Midjourney. Agora é possível gerar novas imagens
 localmente com **FLUX.1-schnell** (Apache-2.0) e **Stable Diffusion 3.5** (Stability AI Community
