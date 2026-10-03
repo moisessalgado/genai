@@ -82,7 +82,10 @@ def roteiro_cmd(slug: str, paginas: int = typer.Option(1, help="número de pági
                     help="frase curta do estilo para o QA (CLIP); com --estilo próprio, "
                          "sem âncora o QA não julga estilo"),
                 forcar: bool = typer.Option(False, "--forcar",
-                    help="sobrescreve um roteiro.yaml existente (guarda o anterior)")):
+                    help="sobrescreve um roteiro.yaml existente (guarda o anterior)"),
+                backend: str = typer.Option(None, help="claude (claude -p da assinatura, "
+                    "com reserva no LLM local) ou litellm (só o local; use em lote). "
+                    "Padrão: roteiro_backend da configuração")):
     """O LLM rascunha o roteiro.yaml a partir do texto de origem do projeto."""
     import time
 
@@ -105,7 +108,7 @@ def roteiro_cmd(slug: str, paginas: int = typer.Option(1, help="número de pági
                 estilo=estilo or roteiro_llm.ESTILO_PADRAO,
                 ancora_estilo=ancora_estilo if (ancora_estilo or estilo)
                 else roteiro_llm.ANCORA_PADRAO,
-                progresso=st.update)
+                gerar_json=roteiro_llm.backend(backend), progresso=st.update)
         except (ValueError, OSError) as e:
             _falha(e)
     if arq.exists():

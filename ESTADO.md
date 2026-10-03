@@ -85,23 +85,36 @@ novo. Na mudança: a `.venv` teve os caminhos reescritos e o
 `~/dev/audio-factory`). Os nomes `T5-XXL (video-factory)`/`CLIP-L (video-factory)` no InvokeAI
 continuam: são rótulos do contrato com o ai-stack, não caminhos.
 
-## LLM: tudo pelo LiteLLM do ai-stack (2026-10-03)
+## LLM: tudo pelo LiteLLM do ai-stack, menos o roteiro da HQ (2026-10-03)
 
-- Padrão agora é `llm_api = "openai"` em `http://127.0.0.1:4000` (LiteLLM), com rotas por
-  função definidas no `litellm_config.yaml` do ai-stack: **`vf-local`** (gemma4:12b no
-  Ollama, `ollama_chat/`) para o audiolivro e o vídeo, e **`hq_llm_modelo`** para o roteiro
-  da HQ. Este fica em `vf-local` até a rota **`vf-roteiro`** (claude-sonnet-5-5) funcionar:
-  falta a `ANTHROPIC_API_KEY` no `.env` do ai-stack, e o LiteLLM 1.89.4 traduz
-  `response_format` para o Sonnet 5.x como ferramenta forçada, que o modelo recusa (400).
-  O Ollama direto continua possível: `llm_api = "ollama"`, `:11434`, `gemma4:12b`.
-- Chave: virtual key `genai` do LiteLLM (só `vf-local`/`vf-roteiro`, `max_budget` 20) em
-  **`config/litellm.chave`** (600, fora do git); `$VF_LLM_CHAVE` vence o arquivo.
+- Padrão: `llm_api = "openai"` em `http://127.0.0.1:4000` (LiteLLM), rota
+  **`genai-local`** (gemma4:12b no Ollama, `ollama_chat/`) para audiolivro, vídeo e a
+  reserva da HQ (`hq_llm_modelo`). O Ollama direto continua possível: `llm_api = "ollama"`,
+  `:11434`, `gemma4:12b`.
+- **Exceção, decisão do operador: o roteiro da HQ vai ao Claude Code da assinatura dele**
+  (`core/claude_cli.py`: `claude -p --output-format json --json-schema ... --model sonnet
+  --tools ""`, por subprocesso, numa pasta temporária vazia). Ele não tem chave de API e não
+  quer pagar crédito de API, e o login da assinatura só vale dentro do Claude Code: não passa
+  pelo LiteLLM. O genai nunca lê nem repassa o token; o filho roda sem `ANTHROPIC_API_KEY`
+  (cobraria na API) e sem `CLAUDE_CODE_OAUTH_TOKEN` (é do openclaw). Sem `claude` no PATH, usa
+  o binário da extensão do VSCode mais nova (`claude_bin`).
+- **Reserva:** binário ausente, timeout, limite de uso ou etapa que não converge em 3
+  tentativas → aviso `!!! roteiro: o Claude (claude -p) falhou` e o resto do roteiro segue no
+  `genai-local`. A franquia divide as janelas de ~5 h com o Claude Code interativo e o
+  openclaw: para lote, `genai hq roteiro --backend litellm` (ou `roteiro_backend = "litellm"`).
+- Medido (A Raposa e as Uvas, 1 página): Claude 18 s, 7 quadros, falas fiéis à fonte;
+  reserva forçada no genai-local 150 s, 5 quadros.
+- A rota `genai-roteiro` (Sonnet pela API) existe no LiteLLM mas fica dormente, sem chave; o
+  genai não aponta para ela.
+- Chave: virtual key `genai` do LiteLLM (`max_budget` 20) em **`config/litellm.chave`**
+  (600, fora do git); `$VF_LLM_CHAVE` vence o arquivo.
 - A primeira falha de conexão do processo imprime **`!!! LLM indisponível em ...`** em
   stderr (com a dica da chave em 401/403): as camadas do audiolivro seguem sem o LLM e
   antes não diziam nada.
 - O LiteLLM ficou semanas fora porque os containers foram criados quando o repo morava em
   `~/ai-workspace/ai-stack`; o Docker passou a montar um diretório vazio no lugar do
-  `litellm_config.yaml`. Recriado em 2026-10-03 a partir de `~/dev/ai-workspace/ai-stack`.
+  `litellm_config.yaml`. Recriado em 2026-10-03 a partir de `~/dev/ai-workspace/ai-stack`,
+  já na 1.103.2 e com banco Postgres próprio (`litellm`, separado do RAG).
 
 ## HQ: pipeline em `genai/hq` (2026-10-03)
 

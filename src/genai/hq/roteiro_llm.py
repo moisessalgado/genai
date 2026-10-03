@@ -22,13 +22,14 @@ from __future__ import annotations
 
 import difflib
 import re
+import sys
 import unicodedata
 from functools import partial
 from typing import Callable, Literal
 
 from pydantic import BaseModel, Field, ValidationError
 
-from ..core import llm
+from ..core import claude_cli, llm
 from ..core.config import settings
 from .roteiro import (MAX_CHARS_TEXTO, MAX_PERSONAGENS_QUADRO, MAX_QUADROS_TIRA, TAMANHOS,
                       Pagina, Personagem, Proporcao, Quadro, Roteiro, Texto)
@@ -288,19 +289,70 @@ def _uma_pagina(n: int, plano: _Plano, pers: dict[str, Personagem], ids: dict[st
     raise ValueError(f"página {n}: o LLM não chegou a um quadro válido. Último erro:{erro}")
 
 
+class _ComReserva:
+    """O `claude -p` (assinatura do operador) com o LLM local de reserva.
+
+    Cai na reserva, de vez e com aviso em stderr, quando o Claude não responde
+    (binário ausente, timeout, limite de uso: `ClaudeIndisponivel`) ou quando
+    uma etapa não converge com ele (`trocar`, chamado por `gerar`). De vez
+    porque franquia esgotada não volta no meio do roteiro."""
+
+    def __init__(self, principal: GerarJson, reserva: GerarJson, nome_reserva: str):
+        self.principal, self.reserva, self.nome_reserva = principal, reserva, nome_reserva
+        self.na_reserva = False
+
+    def trocar(self, motivo: str) -> bool:
+        if self.na_reserva:
+            return False
+        self.na_reserva = True
+        print(f"\n!!! roteiro: o Claude (claude -p) falhou — {motivo}\n"
+              f"!!! seguindo no LLM local ({self.nome_reserva}); revise o roteiro com mais "
+              "cuidado.\n", file=sys.stderr, flush=True)
+        return True
+
+    def __call__(self, *a, **kw) -> dict:
+        if not self.na_reserva:
+            try:
+                return self.principal(*a, **kw)
+            except claude_cli.ClaudeIndisponivel as e:
+                self.trocar(str(e))
+        return self.reserva(*a, **kw)
+
+
+def backend(nome: str | None = None) -> GerarJson:
+    """`claude` (padrão: claude -p com reserva no LiteLLM) ou `litellm`."""
+    nome = nome or settings().roteiro_backend
+    local = partial(llm.gerar_json, modelo=settings().hq_llm_modelo)
+    if nome == "litellm":
+        return local
+    if nome == "claude":
+        return _ComReserva(claude_cli.gerar_json, local, settings().hq_llm_modelo)
+    raise ValueError(f"roteiro_backend desconhecido: {nome!r} — use 'claude' ou 'litellm'")
+
+
 def gerar(fonte: str, *, slug: str, paginas: int = 1, estilo: str = ESTILO_PADRAO,
           ancora_estilo: str | None = ANCORA_PADRAO,
           idioma: str = "pt-BR", titulo: str | None = None,
           gerar_json: GerarJson | None = None, progresso=None) -> Roteiro:
     """Rascunho completo do roteiro. Sobe `ValueError` se o LLM não convergir."""
-    gerar_json = gerar_json or partial(llm.gerar_json, modelo=settings().hq_llm_modelo)
+    gerar_json = gerar_json or backend()
+
+    def etapa(f, *a):
+        """Etapa que não converge no Claude é refeita na reserva."""
+        try:
+            return f(*a, gerar_json)
+        except ValueError as e:
+            if not (isinstance(gerar_json, _ComReserva) and gerar_json.trocar(
+                    f"não convergiu em {TENTATIVAS} tentativas: {str(e)[:300]}")):
+                raise
+            return f(*a, gerar_json)
     fonte = fonte.strip()
     if len(fonte) > MAX_CHARS_FONTE:
         raise ValueError(f"texto-fonte com {len(fonte)} caracteres (máx. {MAX_CHARS_FONTE}):"
                          " divida em trechos, uma HQ por trecho")
     if progresso:
         progresso("plano: elenco e páginas")
-    plano = _plano(fonte, paginas, idioma, gerar_json)
+    plano = etapa(_plano, fonte, paginas, idioma)
     pers: dict[str, Personagem] = {}
     ids: dict[str, str] = {}
     for p in plano.personagens:
@@ -316,8 +368,8 @@ def gerar(fonte: str, *, slug: str, paginas: int = 1, estilo: str = ESTILO_PADRA
     for n in range(1, paginas + 1):
         if progresso:
             progresso(f"página {n}/{paginas}")
-        qs, pg = _uma_pagina(n, plano, pers, ids, fonte, idioma, len(quadros) + 1,
-                             base, gerar_json)
+        qs, pg = etapa(_uma_pagina, n, plano, pers, ids, fonte, idioma, len(quadros) + 1,
+                       base)
         quadros += qs
         pags.append(pg)
     # personagens que o plano listou mas nenhum quadro desenha não precisam de folha

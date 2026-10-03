@@ -103,3 +103,39 @@ def test_erro_de_digitacao_do_llm_e_consertado_pela_fonte():
             == "Os adivinhos viram cabelos brancos, e mais nada.")
     # palavra nova de verdade fica
     assert rl.corrigir_pela_fonte("Profetizaram!", fonte) == "Profetizaram!"
+
+
+def _fora(*a, **kw):
+    from genai.core.claude_cli import ClaudeIndisponivel
+    raise ClaudeIndisponivel("limite de uso")
+
+
+def test_claude_fora_cai_no_local_de_vez_e_avisa(capsys):
+    local = _LLM([PLANO, PAGINA_BOA])
+    chamadas = []
+
+    def claude(*a, **kw):
+        chamadas.append(1)
+        _fora()
+
+    g = rl._ComReserva(claude, local, "genai-local")
+    r = rl.gerar("texto", slug="x", gerar_json=g)
+    assert len(r.quadros) == 3
+    assert chamadas == [1]  # não insiste no Claude depois da 1ª falha
+    assert "seguindo no LLM local (genai-local)" in capsys.readouterr().err
+
+
+def test_etapa_que_nao_converge_no_claude_e_refeita_no_local(capsys):
+    claude = _LLM([PLANO] + [PAGINA_RUIM] * rl.TENTATIVAS)
+    local = _LLM([PAGINA_BOA])
+    g = rl._ComReserva(claude, local, "genai-local")
+    r = rl.gerar("texto", slug="x", gerar_json=g)
+    assert len(r.quadros) == 3 and g.na_reserva
+    assert "não convergiu" in capsys.readouterr().err
+
+
+def test_backend_litellm_nao_chama_o_claude():
+    assert not isinstance(rl.backend("litellm"), rl._ComReserva)
+    assert isinstance(rl.backend("claude"), rl._ComReserva)
+    with pytest.raises(ValueError, match="roteiro_backend"):
+        rl.backend("gpt")

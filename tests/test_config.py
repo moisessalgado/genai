@@ -26,7 +26,8 @@ def test_padroes_reproduzem_o_layout_de_sempre(tmp_path):
     assert s.ace_checkpoint == Path("~/ai/hf/ace-step").expanduser()
     assert s.venv_musica == Path("~/ai/envs/musica-ace").expanduser()
     assert (s.llm_api, s.llm_url) == ("openai", "http://127.0.0.1:4000")
-    assert s.llm_modelo == "vf-local" and s.hq_llm_modelo == "vf-local"
+    assert s.llm_modelo == "genai-local" and s.hq_llm_modelo == "genai-local"
+    assert (s.roteiro_backend, s.claude_modelo) == ("claude", "sonnet")
     assert set(s.origem.values()) == {"padrão"}
 
 

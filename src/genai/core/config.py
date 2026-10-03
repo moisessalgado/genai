@@ -42,6 +42,9 @@ _SECOES: dict[str, tuple[str, str]] = {
     "llm_url": ("servicos", "llm_url"),
     "llm_modelo": ("servicos", "llm_modelo"),
     "hq_llm_modelo": ("servicos", "hq_llm_modelo"),
+    "roteiro_backend": ("servicos", "roteiro_backend"),
+    "claude_modelo": ("servicos", "claude_modelo"),
+    "claude_bin": ("servicos", "claude_bin"),
     "invokeai_url": ("servicos", "invokeai_url"),
 }
 
@@ -60,16 +63,19 @@ _PADROES: dict[str, str] = {
     "venv_musica": "~/ai/envs/musica-ace",
     "venv_musica_mg": "~/ai/envs/musica-musicgen",
     # Todo LLM passa pelo LiteLLM do ai-stack (:4000, API compatível com a
-    # OpenAI), com uma rota por função: `vf-local` é o gemma4:12b do Ollama
-    # (tarefas curtas do audiolivro, sem custo) e `vf-roteiro` é a rota para o
-    # roteiro da HQ. "ollama" + :11434 + "gemma4:12b" ainda funciona, direto
-    # no Ollama. Ver core/llm.py.
+    # OpenAI), com uma rota por função: `genai-local` é o gemma4:12b do Ollama
+    # (sem custo). "ollama" + :11434 + "gemma4:12b" ainda funciona, direto no
+    # Ollama. Ver core/llm.py.
     "llm_api": "openai",
     "llm_url": "http://127.0.0.1:4000",
-    "llm_modelo": "vf-local",
-    # Fica no vf-local até a rota vf-roteiro (Sonnet) responder com saída
-    # estruturada pelo LiteLLM; trocar aqui ou em vf.toml.
-    "hq_llm_modelo": "vf-local",
+    "llm_modelo": "genai-local",
+    # O roteiro da HQ é a exceção: vai ao Claude Code da assinatura do operador
+    # (`claude -p`, core/claude_cli.py) e cai no `hq_llm_modelo` do LiteLLM
+    # se ele falhar. "litellm" pula o Claude (lote, franquia esgotada).
+    "hq_llm_modelo": "genai-local",
+    "roteiro_backend": "claude",
+    "claude_modelo": "sonnet",
+    "claude_bin": "claude",  # sem ele no PATH, o binário da extensão do VSCode
     "invokeai_url": "http://127.0.0.1:9090",
 }
 
@@ -91,6 +97,9 @@ class Settings:
     llm_url: str
     llm_modelo: str
     hq_llm_modelo: str
+    roteiro_backend: str
+    claude_modelo: str
+    claude_bin: str
     invokeai_url: str
     # campo -> de onde veio o valor ("padrão", "HF_HOME", "vf.toml", "VF_..."),
     # para o `doctor` poder dizer por que um caminho é o que é.

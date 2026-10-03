@@ -818,6 +818,20 @@
        "padrao": false,
        "flag": true,
        "ajuda": "sobrescreve um roteiro.yaml existente (guarda o anterior)"
+      },
+      {
+       "nome": "backend",
+       "tipo": "option",
+       "click_tipo": "str",
+       "opts": [
+        "--backend"
+       ],
+       "secundarias": [],
+       "obrigatorio": false,
+       "multiplo": false,
+       "padrao": null,
+       "flag": false,
+       "ajuda": "claude (claude -p da assinatura, com reserva no LLM local) ou litellm (só o local; use em lote). Padrão: roteiro_backend da configuração"
       }
      ]
     },
