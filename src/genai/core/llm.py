@@ -1,24 +1,27 @@
-"""Cliente do LLM local, num lugar só.
+"""Cliente do LLM, num lugar só.
 
 Dois dialetos, escolhidos por `llm_api` na configuração central:
 
-- `ollama` (padrão): API nativa do Ollama (`/api/generate`) em `llm_url`;
-- `openai`: API compatível com a OpenAI (`/v1/chat/completions`), que é o que
-  o LiteLLM do ai-stack (`:4000`) fala. A chave vem de `VF_LLM_CHAVE` no
-  ambiente — não é campo do Settings para o `doctor` não imprimi-la.
+- `openai` (padrão): API compatível com a OpenAI (`/v1/chat/completions`), que
+  é o que o LiteLLM do ai-stack (`:4000`) fala. A chave vem de `VF_LLM_CHAVE`
+  no ambiente ou, sem ela, do arquivo `config/litellm.chave` (fora do git) —
+  não é campo do Settings para o `doctor` não imprimi-la;
+- `ollama`: API nativa do Ollama (`/api/generate`) em `llm_url`.
 
 Antes, quatro módulos montavam a mesma requisição cada um por conta própria;
 trocar o backend agora é mexer na configuração, não no código.
 
 Erros de rede sobem como `urllib.error.URLError`/`TimeoutError`, como sempre
 subiram: quem chama decide o fallback (todos os usos do audiolivro degradam em
-vez de bloquear o pipeline).
+vez de bloquear o pipeline). Como a degradação é silenciosa lá, a primeira
+falha de conexão do processo vira um aviso em stderr, com o endereço e o erro.
 """
 from __future__ import annotations
 
 import json
 import os
-from urllib import request
+import sys
+from urllib import error, request
 
 from .config import settings
 
@@ -29,6 +32,40 @@ _CAMINHO = {"ollama": "/api/generate", "openai": "/v1/chat/completions"}[API]
 # Nome histórico: é o endpoint completo do dialeto ativo, não só o do Ollama.
 URL_GENERATE = settings().llm_url.rstrip("/") + _CAMINHO
 MODELO_PADRAO = settings().llm_modelo
+ARQUIVO_CHAVE = settings().config_dir / "litellm.chave"
+
+_avisado = False
+
+
+def _chave() -> str | None:
+    if os.environ.get("VF_LLM_CHAVE"):
+        return os.environ["VF_LLM_CHAVE"]
+    try:
+        return ARQUIVO_CHAVE.read_text(encoding="utf-8").strip() or None
+    except FileNotFoundError:
+        return None
+
+
+def _avisar(url: str, e: Exception) -> None:
+    """Uma vez por processo: quem chama costuma engolir o erro e seguir sem o
+    LLM, e sem este aviso o resultado só piora, sem dizer por quê."""
+    global _avisado
+    if _avisado:
+        return
+    _avisado = True
+    detalhe = repr(e)
+    if isinstance(e, error.HTTPError):
+        try:
+            corpo = e.read(300).decode("utf-8", "replace")
+        except Exception:
+            corpo = ""
+        detalhe = f"HTTP {e.code} {e.reason} {corpo}".strip()
+    dica = (" (chave do LiteLLM ausente ou recusada: VF_LLM_CHAVE ou "
+            f"{ARQUIVO_CHAVE})" if isinstance(e, error.HTTPError) and e.code in (401, 403)
+            else "")
+    print(f"\n!!! LLM indisponível em {url}: {detalhe}{dica}.\n"
+          "!!! As etapas que dependem dele vão seguir sem ele (resultado pior).\n",
+          file=sys.stderr, flush=True)
 
 
 def _corpo(prompt: str, modelo: str, temperatura: float, num_predict: int,
@@ -58,13 +95,17 @@ def _texto(resposta: dict) -> tuple[str, str | None]:
 def _chamar(prompt: str, *, modelo: str | None, temperatura: float, num_predict: int,
             timeout: float, url: str | None, schema: dict | None) -> tuple[str, str | None]:
     cabecalhos = {"Content-Type": "application/json"}
-    if API == "openai" and os.environ.get("VF_LLM_CHAVE"):
-        cabecalhos["Authorization"] = "Bearer " + os.environ["VF_LLM_CHAVE"]
+    if API == "openai" and (chave := _chave()):
+        cabecalhos["Authorization"] = "Bearer " + chave
     corpo = json.dumps(_corpo(prompt, modelo or MODELO_PADRAO, temperatura,
                               num_predict, schema)).encode()
     req = request.Request(url or URL_GENERATE, data=corpo, headers=cabecalhos)
-    with request.urlopen(req, timeout=timeout) as r:
-        texto, motivo = _texto(json.loads(r.read()))
+    try:
+        with request.urlopen(req, timeout=timeout) as r:
+            texto, motivo = _texto(json.loads(r.read()))
+    except (error.URLError, TimeoutError, ConnectionError) as e:
+        _avisar(req.full_url, e)
+        raise
     return texto.strip(), motivo
 
 

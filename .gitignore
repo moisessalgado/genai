@@ -31,6 +31,8 @@ assets/
 config/youtube_client_secret.json
 config/youtube_token*
 config/youtube_canal_token*
+# Chave virtual do LiteLLM do ai-stack (core/llm.py)
+config/*.chave
 
 # Permissoes pessoais do Claude Code (nao e config de time)
 .claude/settings.local.json

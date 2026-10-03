@@ -23,11 +23,13 @@ from __future__ import annotations
 import difflib
 import re
 import unicodedata
+from functools import partial
 from typing import Callable, Literal
 
 from pydantic import BaseModel, Field, ValidationError
 
 from ..core import llm
+from ..core.config import settings
 from .roteiro import (MAX_CHARS_TEXTO, MAX_PERSONAGENS_QUADRO, MAX_QUADROS_TIRA, TAMANHOS,
                       Pagina, Personagem, Proporcao, Quadro, Roteiro, Texto)
 
@@ -291,7 +293,7 @@ def gerar(fonte: str, *, slug: str, paginas: int = 1, estilo: str = ESTILO_PADRA
           idioma: str = "pt-BR", titulo: str | None = None,
           gerar_json: GerarJson | None = None, progresso=None) -> Roteiro:
     """Rascunho completo do roteiro. Sobe `ValueError` se o LLM não convergir."""
-    gerar_json = gerar_json or llm.gerar_json
+    gerar_json = gerar_json or partial(llm.gerar_json, modelo=settings().hq_llm_modelo)
     fonte = fonte.strip()
     if len(fonte) > MAX_CHARS_FONTE:
         raise ValueError(f"texto-fonte com {len(fonte)} caracteres (máx. {MAX_CHARS_FONTE}):"

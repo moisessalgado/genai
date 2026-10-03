@@ -84,6 +84,24 @@ como **symlink de transição** para `~/dev/genai`; apague quando nada mais apon
 `~/dev/audio-factory`). Os nomes `T5-XXL (video-factory)`/`CLIP-L (video-factory)` no InvokeAI
 continuam: são rótulos do contrato com o ai-stack, não caminhos.
 
+## LLM: tudo pelo LiteLLM do ai-stack (2026-10-03)
+
+- Padrão agora é `llm_api = "openai"` em `http://127.0.0.1:4000` (LiteLLM), com rotas por
+  função definidas no `litellm_config.yaml` do ai-stack: **`vf-local`** (gemma4:12b no
+  Ollama, `ollama_chat/`) para o audiolivro e o vídeo, e **`hq_llm_modelo`** para o roteiro
+  da HQ. Este fica em `vf-local` até a rota **`vf-roteiro`** (claude-sonnet-5-5) funcionar:
+  falta a `ANTHROPIC_API_KEY` no `.env` do ai-stack, e o LiteLLM 1.89.4 traduz
+  `response_format` para o Sonnet 5.x como ferramenta forçada, que o modelo recusa (400).
+  O Ollama direto continua possível: `llm_api = "ollama"`, `:11434`, `gemma4:12b`.
+- Chave: virtual key `genai` do LiteLLM (só `vf-local`/`vf-roteiro`, `max_budget` 20) em
+  **`config/litellm.chave`** (600, fora do git); `$VF_LLM_CHAVE` vence o arquivo.
+- A primeira falha de conexão do processo imprime **`!!! LLM indisponível em ...`** em
+  stderr (com a dica da chave em 401/403): as camadas do audiolivro seguem sem o LLM e
+  antes não diziam nada.
+- O LiteLLM ficou semanas fora porque os containers foram criados quando o repo morava em
+  `~/ai-workspace/ai-stack`; o Docker passou a montar um diretório vazio no lugar do
+  `litellm_config.yaml`. Recriado em 2026-10-03 a partir de `~/dev/ai-workspace/ai-stack`.
+
 ## HQ: pipeline em `genai/hq` (2026-10-03)
 
 Etapa 4 da reestruturação: o spike (`spikes/hq/`, hoje só no histórico do git) virou o pacote

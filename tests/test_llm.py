@@ -10,6 +10,15 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
 from genai.core import llm  # noqa: E402
 
+import pytest  # noqa: E402
+
+
+@pytest.fixture(autouse=True)
+def _dialeto_ollama(monkeypatch):
+    """Os testes do payload nativo valem qualquer que seja o padrão da máquina;
+    os do LiteLLM trocam para "openai" explicitamente."""
+    monkeypatch.setattr(llm, "API", "ollama")
+
 
 class _Resp(io.BytesIO):
     def __enter__(self):
@@ -85,3 +94,36 @@ def test_dialeto_openai_fala_chat_completions_com_chave(monkeypatch):
     assert c["max_tokens"] == 700
     assert c["response_format"]["json_schema"]["schema"] == {"type": "object"}
     assert visto["auth"] == "Bearer sk-teste"
+
+
+def test_chave_do_arquivo_quando_nao_ha_variavel(monkeypatch, tmp_path):
+    arq = tmp_path / "litellm.chave"
+    arq.write_text("sk-arquivo\n", encoding="utf-8")
+    visto = {}
+
+    def urlopen(req, timeout):
+        visto["auth"] = req.get_header("Authorization")
+        return _Resp(json.dumps({"choices": [{"message": {"content": "ok"}}]}).encode())
+
+    monkeypatch.setattr(llm, "API", "openai")
+    monkeypatch.delenv("VF_LLM_CHAVE", raising=False)
+    monkeypatch.setattr(llm, "ARQUIVO_CHAVE", arq)
+    monkeypatch.setattr(llm.request, "urlopen", urlopen)
+    assert llm.gerar("p") == "ok"
+    assert visto["auth"] == "Bearer sk-arquivo"
+
+
+def test_llm_fora_avisa_uma_vez_e_o_erro_sobe(monkeypatch, capsys):
+    import pytest
+    from urllib import error
+
+    def urlopen(req, timeout):
+        raise error.URLError("Connection refused")
+
+    monkeypatch.setattr(llm, "_avisado", False)
+    monkeypatch.setattr(llm.request, "urlopen", urlopen)
+    for _ in range(2):
+        with pytest.raises(error.URLError):
+            llm.gerar("p", url="http://fora:4000/x")
+    err = capsys.readouterr().err
+    assert err.count("LLM indisponível em http://fora:4000/x") == 1

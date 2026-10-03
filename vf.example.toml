@@ -21,7 +21,9 @@
 # musica_mg = "~/ai/envs/musica-musicgen"  # MusicGen
 
 [servicos]
-# llm_api      = "ollama"                   # ou "openai" (LiteLLM; chave em VF_LLM_CHAVE)
-# llm_url      = "http://localhost:11434"   # Ollama (LiteLLM: "http://127.0.0.1:4000")
-# llm_modelo   = "gemma4:12b"
+# llm_api       = "openai"                  # LiteLLM do ai-stack; ou "ollama" (direto)
+# llm_url       = "http://127.0.0.1:4000"   # Ollama direto: "http://localhost:11434"
+# llm_modelo    = "vf-local"                # rota do LiteLLM (Ollama direto: "gemma4:12b")
+# hq_llm_modelo = "vf-local"                # roteiro da HQ; "vf-roteiro" = Sonnet
+# Chave do LiteLLM: $VF_LLM_CHAVE ou o arquivo config/litellm.chave (fora do git).
 # invokeai_url = "http://127.0.0.1:9090"

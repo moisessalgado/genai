@@ -41,6 +41,7 @@ _SECOES: dict[str, tuple[str, str]] = {
     "llm_api": ("servicos", "llm_api"),
     "llm_url": ("servicos", "llm_url"),
     "llm_modelo": ("servicos", "llm_modelo"),
+    "hq_llm_modelo": ("servicos", "hq_llm_modelo"),
     "invokeai_url": ("servicos", "invokeai_url"),
 }
 
@@ -58,11 +59,17 @@ _PADROES: dict[str, str] = {
     # listas congeladas para recria-las estao em envs/ neste repo.
     "venv_musica": "~/ai/envs/musica-ace",
     "venv_musica_mg": "~/ai/envs/musica-musicgen",
-    # "ollama" (API nativa) ou "openai" (API compatível; o LiteLLM do
-    # ai-stack em :4000). Ver core/llm.py.
-    "llm_api": "ollama",
-    "llm_url": "http://localhost:11434",
-    "llm_modelo": "gemma4:12b",
+    # Todo LLM passa pelo LiteLLM do ai-stack (:4000, API compatível com a
+    # OpenAI), com uma rota por função: `vf-local` é o gemma4:12b do Ollama
+    # (tarefas curtas do audiolivro, sem custo) e `vf-roteiro` é a rota para o
+    # roteiro da HQ. "ollama" + :11434 + "gemma4:12b" ainda funciona, direto
+    # no Ollama. Ver core/llm.py.
+    "llm_api": "openai",
+    "llm_url": "http://127.0.0.1:4000",
+    "llm_modelo": "vf-local",
+    # Fica no vf-local até a rota vf-roteiro (Sonnet) responder com saída
+    # estruturada pelo LiteLLM; trocar aqui ou em vf.toml.
+    "hq_llm_modelo": "vf-local",
     "invokeai_url": "http://127.0.0.1:9090",
 }
 
@@ -83,6 +90,7 @@ class Settings:
     llm_api: str
     llm_url: str
     llm_modelo: str
+    hq_llm_modelo: str
     invokeai_url: str
     # campo -> de onde veio o valor ("padrão", "HF_HOME", "vf.toml", "VF_..."),
     # para o `doctor` poder dizer por que um caminho é o que é.
