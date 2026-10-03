@@ -1,0 +1,26 @@
+# Configuração local desta máquina. Copie para `vf.toml` (fora do git) e
+# descomente só o que mudar -- o que ficar comentado usa o padrão do código.
+# Caminho relativo é relativo à raiz do repositório; `~` expande.
+# Variáveis `VF_<CAMPO>` no ambiente vencem este arquivo (ex.: VF_LLM_URL).
+# `uv run audio-factory doctor` mostra o valor final de cada campo e de onde veio.
+
+[caminhos]
+# projects = "projects"
+# assets   = "assets"
+# cache    = "cache"
+# voices   = "voices"
+# lexicon  = "lexicon"
+# books    = "books"
+# config   = "config"           # credenciais do YouTube
+# hf_home  = "~/ai/hf"          # padrão: $HF_HOME, senão <raiz>/models
+
+[venvs]
+# Runners isolados (subprocesso que troca JSON/arquivo; nenhum objeto atravessa).
+# imagem    = ".venv-imagem"
+# musica    = ".venv-musica"     # ACE-Step
+# musica_mg = ".venv-musica-mg"  # MusicGen
+
+[servicos]
+# llm_url      = "http://localhost:11434"   # Ollama
+# llm_modelo   = "gemma4:12b"
+# invokeai_url = "http://127.0.0.1:9090"

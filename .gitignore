@@ -61,3 +61,6 @@ config/youtube_canal_token*
 *.db
 *.sqlite
 *.sqlite3
+
+# Configuracao local da maquina (modelo versionado: vf.example.toml)
+/vf.toml
