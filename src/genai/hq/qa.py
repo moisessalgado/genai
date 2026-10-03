@@ -13,10 +13,12 @@ Reprova:
 A nota de estilo é a similaridade CLIP à `ancora_estilo` do roteiro menos a
 similaridade a `ANCORA_CONTRA` (HQ moderna). Medida nos 16 quadros do spike:
 de +0,058 a −0,066; os de cima têm céu em bokashi e textura de papel, os de
-baixo são HQ moderna com cor digital (um deles com uma máquina anacrônica). O
-corte em −0,03 reprova os 6 piores e deixa pelo menos um candidato em cada
-quadro. Entre os aprovados vence a maior nota de estilo — o problema que o
-spike achou foi justamente o estilo puxar para a HQ moderna.
+baixo são HQ moderna com cor digital. A nota separa bem — mas no piloto da
+estratégia `multi` (a padrão, que encena melhor) TODOS os candidatos ficaram
+entre −0,056 e −0,115: com o corte em −0,03 do spike, todo quadro iria para
+revisão humana. Por isso ela ORDENA (vence a maior nota entre os aprovados) e
+só reprova abaixo de −0,15, fora de tudo o que foi medido. Ressalva medida:
+um quadro com artefatos de glitch tirou +0,001 — a nota não é QA de defeito.
 """
 from __future__ import annotations
 
@@ -28,7 +30,7 @@ from ..video import imagem_qa
 from . import rostos as rostos_mod
 
 ANCORA_CONTRA = "a modern western comic book illustration with digital shading"
-LIMIAR_ESTILO = -0.03
+LIMIAR_ESTILO = -0.15
 
 
 def nota_estilo(imagens: list[Path], ancora: str) -> dict[str, float]:

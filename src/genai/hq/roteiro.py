@@ -127,6 +127,10 @@ class Roteiro(BaseModel):
     # similaridade a ela menos a similaridade a "HQ moderna" (hq/qa.py). Sem
     # âncora, o QA não julga estilo.
     ancora_estilo: str | None = None
+    # Época e lugar da história, em inglês ("ancient India, 5th century BC").
+    # Vai em todo prompt de quadro com "no modern objects": sem isso o Qwen pôs
+    # caminhões numa estrada da Índia antiga (piloto de 2026-10-03).
+    epoca: str | None = None
     # Gravura de referência (caminho relativo ao projeto) para a etapa de
     # style transfer dos quadros (hq/quadros.py). Sem ela, a etapa não roda.
     estampa: str | None = None

@@ -3,7 +3,7 @@
 Auditoria exigida pela §14 do TDD. **Nenhum peso entra no pipeline sem uma linha aqui.**
 Reconferir o model card a cada atualização de versão — licença de peso pode mudar entre releases.
 
-Última verificação: 2026-10-02.
+Última verificação: 2026-10-03.
 
 ## Pesos de TTS
 
@@ -71,6 +71,7 @@ por HTTP (`core/servicos/invokeai.py`). Nenhum peso de imagem roda no processo d
 | Qwen Image Edit 2511 (Q4_K_M) | `unsloth/Qwen-Image-Edit-2511-GGUF` (GGUF do `Qwen/Qwen-Image-Edit-2511`) | Apache-2.0 | ✅ Sim | model cards HF (`license: apache-2.0`, "Qwen-Image is licensed under Apache 2.0"), 2026-10-02 |
 | Qwen Image VAE | `Qwen/Qwen-Image-Edit-2511::vae` | Apache-2.0 | ✅ Sim | model card HF, 2026-10-02 |
 | Qwen Image Edit Lightning (4-step, bf16) | `lightx2v/Qwen-Image-Edit-2511-Lightning` | Apache-2.0 | ✅ Sim | model card HF (`license: apache-2.0`), 2026-10-02 |
+| Qwen Image Edit Style Transfer (dx8152) | `dx8152/Qwen-Image-Edit-2511-Style-Transfer::style-transfer-1_20.safetensors` (LoRA do `Qwen/Qwen-Image-Edit-2511`) | Apache-2.0 | ✅ Sim | model card HF (`license: apache-2.0`), 2026-10-03. Etapa opcional de estilo da HQ (`estampa` no roteiro) |
 | Qwen2.5-VL Encoder (fp8 scaled) | `Comfy-Org/Qwen-Image_ComfyUI` (fp8 do `Qwen/Qwen2.5-VL-7B-Instruct`) | Apache-2.0 | ✅ Sim | model cards HF (os dois `license: apache-2.0`), 2026-10-02 — atenção: o Qwen2.5-VL **3B e 72B** têm licença própria, só o 7B é Apache |
 
 **Nenhum peso é usado sem revisar o resultado**: `gerar()` só produz rascunhos descartáveis em
@@ -86,6 +87,7 @@ License, comercial só abaixo de US$1M de receita anual; reconferir se voltar vi
 
 | Modelo | Licença | Uso | Fonte verificada |
 |---|---|---|---|
+| `opencv/face_detection_yunet` (`face_detection_yunet_2023mar.onnx`, OpenCV Zoo) | MIT | ✅ Detecção de rosto na HQ: balão não cobre rosto, QA conta rostos (`hq/rostos.py`) | README do repo HF ("All files in this directory are licensed under MIT License"), 2026-10-03 |
 | `openai/clip-vit-base-patch32` | MIT (repo `openai/CLIP`) | 🟡 Só como filtro interno: nota de relevância e foto-vs-ilustração no preset `sincronizado` | repo GitHub (MIT), 2026-10-02 |
 
 🟡 O model card do CLIP declara "**any** deployed use case of the model — whether commercial or
@@ -97,6 +99,16 @@ classificador com licença sem ressalva (ou voltar à curadoria humana).
 Não usado para teste cujo áudio venha a ser publicado: `FLUX.1-**dev**` (licença não-comercial da
 Black Forest Labs) fica fora do pipeline por esse motivo, mesmo tendo qualidade superior ao
 `schnell` — decisão do operador em 2026-08-31.
+
+### Estilo ukiyo-e: por que não há LoRA de estilo
+
+Procurado em 2026-10-03 (HF, `ukiyo`/`ukiyoe`/`woodblock`/`hokusai`): todas as LoRAs
+ukiyo-e são adaptadores do **FLUX.1-dev** (herdam a licença NC — fora) ou do
+**FLUX.2-klein-base-4B** (`aiconiccompany/ukiyo-e-flux-lora`, Apache-2.0, mas a base não está
+no InvokeAI). Nenhuma para Qwen-Image ou FLUX.1-schnell. O caminho licenciado é a LoRA de
+*style transfer* acima, com uma gravura **em domínio público** como referência de estilo
+(ex.: Hokusai/Hiroshige do Met Open Access, CC0) — a gravura usada fica no projeto e é
+registrada no `project.yaml`.
 
 ## Excluídos do pipeline — pesos não-comerciais
 
@@ -126,6 +138,7 @@ Black Forest Labs) fica fora do pipeline por esse motivo, mesmo tendo qualidade 
 | PyTorch | BSD-3 | wheels cu130 |
 | faster-whisper / CTranslate2 | MIT | QA por ASR |
 | FFmpeg | LGPL/GPL conforme build | Usado como ferramenta, não redistribuído |
+| `opencv-python-headless` (código) | Apache-2.0 (OpenCV ≥ 4.5) | Roda o YuNet (`cv2.FaceDetectorYN`) no processo, na CPU |
 
 ## Fontes tipográficas
 

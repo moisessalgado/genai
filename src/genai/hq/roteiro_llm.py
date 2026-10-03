@@ -62,6 +62,7 @@ class _PaginaPlano(BaseModel):
 
 class _Plano(BaseModel):
     titulo: str
+    epoca: str = Field(description="time and place of the story, in English")
     personagens: list[_PersonagemLLM] = Field(min_length=1, max_length=6)
     paginas: list[_PaginaPlano] = Field(min_length=1)
 
@@ -121,6 +122,8 @@ SOURCE TEXT:
 
 Plan the adaptation in exactly {paginas} page(s).
 - "titulo": the comic's title, in {idioma}.
+- "epoca": the time and place where the story happens, in ENGLISH, short
+  (e.g. "ancient India, 5th century BC", "rural Brazil, early 1900s").
 - "personagens": the recurring characters who appear on panels (at most 6).
   "id" is a short lowercase ascii slug; "nome" as in the text; "ficha" is a
   FIXED visual description in ENGLISH, 40 to 70 words: age, build, face, hair,
@@ -305,7 +308,7 @@ def gerar(fonte: str, *, slug: str, paginas: int = 1, estilo: str = ESTILO_PADRA
         pers[pid] = Personagem(nome=p.nome, ficha=p.ficha)
         ids.update({p.id: pid, p.nome: pid, _slug(p.nome): pid, pid: pid})
     base = {"slug": slug, "titulo": titulo or plano.titulo, "idioma": idioma,
-            "estilo": estilo, "ancora_estilo": ancora_estilo, "personagens": {k: v.model_dump() for k, v in pers.items()}}
+            "estilo": estilo, "ancora_estilo": ancora_estilo, "epoca": plano.epoca, "personagens": {k: v.model_dump() for k, v in pers.items()}}
     quadros: list[Quadro] = []
     pags: list[Pagina] = []
     for n in range(1, paginas + 1):

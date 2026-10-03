@@ -11,7 +11,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 from genai.hq import roteiro_llm as rl  # noqa: E402
 from genai.hq.roteiro import Quadro  # noqa: E402
 
-PLANO = {"titulo": "O Jabuti e a Onça",
+PLANO = {"titulo": "O Jabuti e a Onça", "epoca": "Amazon forest",
          "personagens": [{"id": "jabuti", "nome": "Jabuti", "ficha": "a small tortoise"},
                          {"id": "onca", "nome": "Onça", "ficha": "a big jaguar"},
                          {"id": "macaco", "nome": "Macaco", "ficha": "a monkey"}],

@@ -34,7 +34,11 @@ from . import servico
 from .roteiro import Quadro, Roteiro
 
 ESTRATEGIAS = ("duas-passadas", "multi", "composta")
-ESTRATEGIA_PADRAO = "duas-passadas"
+# Medido no piloto (quadros 2, 3 e 5, 6 candidatos cada): `multi` encena bem
+# (os dois na mesma carruagem, interagindo) em 219 s; `duas-passadas` custou
+# 432 s sem ganho visível de identidade; `composta` saiu mais ukiyo-e, mas
+# copiou o layout lado a lado, duplicou o Channa e rabiscou "texto".
+ESTRATEGIA_PADRAO = "multi"
 PAPEL = (244, 236, 216)
 # Etapa opcional de estilo: LoRA de style transfer (Apache-2.0, ver LICENSES.md)
 # com uma gravura de referência (`estampa` no roteiro). Prompt do model card.
@@ -45,7 +49,7 @@ PROMPT_ESTILO = ("style transfer. Change the style of Picture 1 to the style of 
                  "and poses, and everything depicted in Picture 1 unchanged.")
 # Muda junto com qualquer prompt abaixo: entra na assinatura, e quadros já
 # escolhidos com o prompt velho voltam para a fila.
-VERSAO_PROMPT = 1
+VERSAO_PROMPT = 2
 
 
 def pasta(proj: Path, qid: int) -> Path:
@@ -62,8 +66,10 @@ def _lados(q: Quadro) -> list[str]:
 
 
 def prompt_quadro(r: Roteiro, q: Quadro, estrategia: str) -> str:
+    epoca = (f" Setting: {r.epoca}; no modern objects, no cars, no trucks, no machines."
+             if r.epoca else "")
     final = (f"Draw a brand-new comic book panel with a completely new composition and "
-             f"background: {q.cena}.")
+             f"background: {q.cena}.{epoca}")
     estilo = f" Art style: {r.estilo}"
     if not q.personagens:
         return final + estilo
@@ -130,7 +136,7 @@ def _duas(q: Quadro, estrategia: str) -> bool:
 def assinatura(proj: Path, r: Roteiro, q: Quadro, refs: dict[str, Path], estrategia: str) -> str:
     estilo = ((ESTILO_LORA, PESO_ESTILO, PROMPT_ESTILO, hqp.marca_arquivo(proj / r.estampa))
               if r.estampa else ())
-    return hqp.marca(VERSAO_PROMPT, estrategia, r.estilo, q.cena, q.proporcao, *estilo,
+    return hqp.marca(VERSAO_PROMPT, estrategia, r.estilo, r.epoca, q.cena, q.proporcao, *estilo,
                      *(f"{p}={r.personagens[p].ficha}={hqp.marca_arquivo(refs[p])}"
                        for p in q.personagens))
 
