@@ -38,6 +38,7 @@ _SECOES: dict[str, tuple[str, str]] = {
     "hf_home": ("caminhos", "hf_home"),
     "venv_musica": ("venvs", "musica"),
     "venv_musica_mg": ("venvs", "musica_mg"),
+    "llm_api": ("servicos", "llm_api"),
     "llm_url": ("servicos", "llm_url"),
     "llm_modelo": ("servicos", "llm_modelo"),
     "invokeai_url": ("servicos", "invokeai_url"),
@@ -57,6 +58,9 @@ _PADROES: dict[str, str] = {
     # listas congeladas para recria-las estao em envs/ neste repo.
     "venv_musica": "~/ai/envs/musica-ace",
     "venv_musica_mg": "~/ai/envs/musica-musicgen",
+    # "ollama" (API nativa) ou "openai" (API compatível; o LiteLLM do
+    # ai-stack em :4000). Ver core/llm.py.
+    "llm_api": "ollama",
     "llm_url": "http://localhost:11434",
     "llm_modelo": "gemma4:12b",
     "invokeai_url": "http://127.0.0.1:9090",
@@ -76,6 +80,7 @@ class Settings:
     hf_home: Path
     venv_musica: Path
     venv_musica_mg: Path
+    llm_api: str
     llm_url: str
     llm_modelo: str
     invokeai_url: str

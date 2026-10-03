@@ -44,3 +44,44 @@ def test_modelo_e_url_explicitos_vencem_a_configuracao(monkeypatch):
     monkeypatch.setattr(llm.request, "urlopen", urlopen)
     llm.gerar("p", modelo="outro:7b", url="http://outro:1/api/generate")
     assert visto == {"url": "http://outro:1/api/generate", "modelo": "outro:7b"}
+
+
+def test_gerar_json_manda_o_schema_no_format_e_decodifica(monkeypatch):
+    visto = {}
+    schema = {"type": "object", "properties": {"a": {"type": "integer"}}}
+
+    def urlopen(req, timeout):
+        visto.update(corpo=json.loads(req.data))
+        return _Resp(json.dumps({"response": ' {"a": 3} '}).encode())
+
+    monkeypatch.setattr(llm.request, "urlopen", urlopen)
+    assert llm.gerar_json("p", schema) == {"a": 3}
+    assert visto["corpo"]["format"] == schema
+
+
+def test_gerar_json_resposta_cortada_vira_value_error(monkeypatch):
+    monkeypatch.setattr(llm.request, "urlopen",
+                        lambda req, timeout: _Resp(b'{"response": "{\\"a\\": "}'))
+    import pytest
+    with pytest.raises(ValueError, match="JSON"):
+        llm.gerar_json("p", {"type": "object"})
+
+
+def test_dialeto_openai_fala_chat_completions_com_chave(monkeypatch):
+    """O LiteLLM do ai-stack: troca de backend só pela configuração."""
+    visto = {}
+
+    def urlopen(req, timeout):
+        visto.update(corpo=json.loads(req.data), auth=req.get_header("Authorization"))
+        return _Resp(json.dumps({"choices": [{"message": {"content": '{"a": 1}'}}]}).encode())
+
+    monkeypatch.setattr(llm, "API", "openai")
+    monkeypatch.setenv("VF_LLM_CHAVE", "sk-teste")
+    monkeypatch.setattr(llm.request, "urlopen", urlopen)
+    assert llm.gerar_json("p", {"type": "object"}, num_predict=700,
+                          url="http://x:4000/v1/chat/completions") == {"a": 1}
+    c = visto["corpo"]
+    assert c["messages"] == [{"role": "user", "content": "p"}]
+    assert c["max_tokens"] == 700
+    assert c["response_format"]["json_schema"]["schema"] == {"type": "object"}
+    assert visto["auth"] == "Bearer sk-teste"

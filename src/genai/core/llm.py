@@ -1,40 +1,97 @@
 """Cliente do LLM local, num lugar só.
 
-Hoje fala com a API nativa do Ollama (`/api/generate`) em `llm_url`, com o
-modelo `llm_modelo` da configuração central. Antes, quatro módulos montavam a
-mesma requisição cada um por conta própria; trocar o backend (LiteLLM, por
-exemplo) agora é mexer só aqui.
+Dois dialetos, escolhidos por `llm_api` na configuração central:
+
+- `ollama` (padrão): API nativa do Ollama (`/api/generate`) em `llm_url`;
+- `openai`: API compatível com a OpenAI (`/v1/chat/completions`), que é o que
+  o LiteLLM do ai-stack (`:4000`) fala. A chave vem de `VF_LLM_CHAVE` no
+  ambiente — não é campo do Settings para o `doctor` não imprimi-la.
+
+Antes, quatro módulos montavam a mesma requisição cada um por conta própria;
+trocar o backend agora é mexer na configuração, não no código.
 
 Erros de rede sobem como `urllib.error.URLError`/`TimeoutError`, como sempre
-subiram: quem chama decide o fallback (todos os usos aqui degradam em vez de
-bloquear o pipeline).
+subiram: quem chama decide o fallback (todos os usos do audiolivro degradam em
+vez de bloquear o pipeline).
 """
 from __future__ import annotations
 
 import json
+import os
 from urllib import request
 
 from .config import settings
 
-URL_GENERATE = settings().llm_url.rstrip("/") + "/api/generate"
+API = settings().llm_api
+if API not in ("ollama", "openai"):
+    raise ValueError(f"llm_api desconhecida: {API!r} — use 'ollama' ou 'openai'")
+_CAMINHO = {"ollama": "/api/generate", "openai": "/v1/chat/completions"}[API]
+# Nome histórico: é o endpoint completo do dialeto ativo, não só o do Ollama.
+URL_GENERATE = settings().llm_url.rstrip("/") + _CAMINHO
 MODELO_PADRAO = settings().llm_modelo
+
+
+def _corpo(prompt: str, modelo: str, temperatura: float, num_predict: int,
+           schema: dict | None) -> dict:
+    if API == "ollama":
+        corpo = {"model": modelo, "prompt": prompt, "stream": False,
+                 "options": {"temperature": temperatura, "num_predict": num_predict}}
+        if schema is not None:
+            corpo["format"] = schema
+        return corpo
+    corpo = {"model": modelo, "messages": [{"role": "user", "content": prompt}],
+             "stream": False, "temperature": temperatura, "max_tokens": num_predict}
+    if schema is not None:
+        corpo["response_format"] = {"type": "json_schema",
+                                    "json_schema": {"name": "saida", "schema": schema}}
+    return corpo
+
+
+def _texto(resposta: dict) -> str:
+    if API == "ollama":
+        return resposta["response"]
+    return resposta["choices"][0]["message"]["content"] or ""
+
+
+def _chamar(prompt: str, *, modelo: str | None, temperatura: float, num_predict: int,
+            timeout: float, url: str | None, schema: dict | None) -> str:
+    cabecalhos = {"Content-Type": "application/json"}
+    if API == "openai" and os.environ.get("VF_LLM_CHAVE"):
+        cabecalhos["Authorization"] = "Bearer " + os.environ["VF_LLM_CHAVE"]
+    corpo = json.dumps(_corpo(prompt, modelo or MODELO_PADRAO, temperatura,
+                              num_predict, schema)).encode()
+    req = request.Request(url or URL_GENERATE, data=corpo, headers=cabecalhos)
+    with request.urlopen(req, timeout=timeout) as r:
+        return _texto(json.loads(r.read())).strip()
 
 
 def gerar(prompt: str, *, modelo: str | None = None, temperatura: float = 0.0,
           num_predict: int = 600, timeout: float = 60, url: str | None = None) -> str:
     """Uma resposta completa (sem streaming), já sem espaços nas pontas.
 
+    `url`, se dado, é o endpoint completo do dialeto ativo.
+
     `num_predict` baixo é armadilha medida: o gemma4:12b gasta ~230 tokens
     raciocinando antes de responder, e com orçamento curto para por 'length'
     devolvendo string vazia. 600 é o piso seguro para respostas curtas.
     """
-    corpo = json.dumps({
-        "model": modelo or MODELO_PADRAO,
-        "prompt": prompt,
-        "stream": False,
-        "options": {"temperature": temperatura, "num_predict": num_predict},
-    }).encode()
-    req = request.Request(url or URL_GENERATE, data=corpo,
-                          headers={"Content-Type": "application/json"})
-    with request.urlopen(req, timeout=timeout) as r:
-        return json.loads(r.read())["response"].strip()
+    return _chamar(prompt, modelo=modelo, temperatura=temperatura,
+                   num_predict=num_predict, timeout=timeout, url=url, schema=None)
+
+
+def gerar_json(prompt: str, schema: dict, *, modelo: str | None = None,
+               temperatura: float = 0.0, num_predict: int = 4000, timeout: float = 300,
+               url: str | None = None):
+    """Saída estruturada: o servidor restringe a geração ao JSON Schema dado
+    (`format` no Ollama, `response_format` na API OpenAI) e aqui ela volta já
+    decodificada. Validar o CONTEÚDO (ids coerentes etc.) é de quem chama —
+    o schema garante a forma, não o sentido.
+
+    `ValueError` se a resposta não for JSON (resposta cortada por
+    `num_predict`, tipicamente)."""
+    texto = _chamar(prompt, modelo=modelo, temperatura=temperatura,
+                    num_predict=num_predict, timeout=timeout, url=url, schema=schema)
+    try:
+        return json.loads(texto)
+    except json.JSONDecodeError as e:
+        raise ValueError(f"LLM não devolveu JSON ({e}); início: {texto[:200]!r}") from e

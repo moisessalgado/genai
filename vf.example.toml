@@ -21,6 +21,7 @@
 # musica_mg = "~/ai/envs/musica-musicgen"  # MusicGen
 
 [servicos]
-# llm_url      = "http://localhost:11434"   # Ollama
+# llm_api      = "ollama"                   # ou "openai" (LiteLLM; chave em VF_LLM_CHAVE)
+# llm_url      = "http://localhost:11434"   # Ollama (LiteLLM: "http://127.0.0.1:4000")
 # llm_modelo   = "gemma4:12b"
 # invokeai_url = "http://127.0.0.1:9090"
