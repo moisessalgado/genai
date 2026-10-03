@@ -1,7 +1,8 @@
 .venv/
-.venv-musica/
-.venv-imagem/
-models/
+.venv-*/
+# `models` e symlink para ~/ai/hf (HF_HOME unico da maquina); `models/` com
+# barra so casa diretorio, e o symlink aparecia como nao rastreado.
+/models
 cache/
 projects/
 books/
@@ -30,3 +31,33 @@ assets/
 config/youtube_client_secret.json
 config/youtube_token*
 config/youtube_canal_token*
+
+# Permissoes pessoais do Claude Code (nao e config de time)
+.claude/settings.local.json
+
+# Guarda contra binario pesado em qualquer pasta (spikes/, tests/, docs/...):
+# pesos, midia e saidas geradas vivem em ~/ai, assets/, cache/ e projects/.
+# Excecao pontual: `git add -f`, ou um `!caminho` abaixo com o motivo.
+*.safetensors
+*.gguf
+*.ckpt
+*.pt
+*.pth
+*.onnx
+*.bin
+*.wav
+*.flac
+*.mp3
+*.aac
+*.m4a
+*.mp4
+*.mkv
+*.webm
+*.png
+*.jpg
+*.jpeg
+*.webp
+*.cbz
+*.db
+*.sqlite
+*.sqlite3
