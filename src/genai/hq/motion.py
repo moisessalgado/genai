@@ -39,7 +39,7 @@ PAUSA_FIM_QUADRO = 0.9
 QUADRO_MUDO = 3.0
 # Dissolve curto: é o balão aparecendo, não a troca lenta de slide.
 CRUZAMENTO = 0.35
-FONTE_VIDEO = 40
+FONTE_VIDEO = 48  # 40 ficou miúdo em 1080p (piloto)
 
 
 def _tamanho_video(proporcao_wh: float) -> tuple[int, int]:

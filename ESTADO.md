@@ -73,6 +73,80 @@ Modelos ficam em `models/` (aponte `HF_HOME` para lá).
   exigiria `UV_PROJECT_ENVIRONMENT` em toda chamada.
 
 
+## HQ: pipeline em `genai/hq` (2026-10-03)
+
+Etapa 4 da reestruturação: o spike (`spikes/hq/`, hoje só no histórico do git) virou o pacote
+`genai/hq/` e o grupo de comandos `genai hq`. Cada passo é retomável (estado em `hq_itens`,
+no mesmo `state.db` do projeto, ao lado dos `chunks` do audiolivro).
+
+```bash
+genai hq novo <slug> --titulo "..." --from texto.txt --narrator narrador-v2
+genai hq roteiro <slug> [--paginas N]       # LLM rascunha roteiro.yaml — revise antes de seguir
+genai hq elenco <slug>                       # folhas-modelo FLUX + elenco/contato.png
+genai hq elenco-aprovar <slug> <pid> elenco/<pid>/cand-*.png
+genai hq limpar <slug>                       # Qwen Edit tira caligrafia/selos da folha
+genai hq elenco-aprovar <slug> <pid> elenco/<pid>/limpo-*.png   # vira ref.png
+genai hq quadros <slug>                      # Qwen Edit + refs; QA escolhe; quadros/<id>/contato.png
+genai hq escolher <slug> <quadro> <png>      # troca a escolha / resolve needs_review
+genai hq quadros <slug> --refazer --ids 3    # candidatos novos (seeds novas) para um quadro
+genai hq status <slug>
+genai hq paginas <slug> && genai hq exportar <slug>   # PDF, CBZ (ComicInfo), webtoon/
+genai hq motion <slug>                       # narra (TTS do audiolivro) e renderiza o MP4
+genai publish <slug>                         # o mesmo publish de sempre
+```
+
+| Módulo | O quê |
+|---|---|
+| `roteiro.py` | schema pydantic: personagens (ficha em inglês, `voz`), quadros (`proporcao`, personagens esquerda→direita, cena em inglês, textos), páginas em tiras, `estilo`, `ancora_estilo`, `epoca`, `estrategia`, `estampa`, formato da página |
+| `roteiro_llm.py` | plano (elenco + resumo por página) e uma página por pedido, via `core/llm.gerar_json` |
+| `elenco.py` | folha FLUX → aprovação → limpeza Qwen → `ref.png` |
+| `quadros.py` + `qa.py` | cadeia de etapas por quadro (principal, correção, estilo), QA, rodadas, escolha |
+| `rostos.py` | YuNet (OpenCV Zoo, MIT) na CPU |
+| `letreiro.py` | balões em coordenadas normalizadas, busca em feixe; rabicho para o rosto de quem fala |
+| `layout.py`, `exportar.py` | tiras na página; PDF/CBZ das páginas, webtoon re-letreirado a 800 px |
+| `motion.py` | script.json da narração, faixa com tempo exato por balão, plano para o `render` |
+
+### O que o piloto mediu (As Quatro Visões, 1 página, 6 quadros)
+
+- **Roteiro (gemma4:12b)**: 38–59 s por página. Com `format` (JSON Schema) o modelo **não
+  raciocina** (`thinking` vazio). Ainda assim troca letras sob a gramática ("adividos",
+  "branc0s") e inventou um id ("channo"): os ids vão restritos por `enum` no schema e as falas
+  são consertadas pelo texto-fonte (`corrigir_pela_fonte`). As **tiras não são pedidas ao LLM**:
+  partição ótima das proporções (alvo ~2,2 por tira).
+- **Elenco**: 8 folhas FLUX em 94 s; 4 limpezas Qwen em 143 s (com a carga do modelo). O schnell
+  pôs caligrafia/selo em **todas** as 8 folhas; a limpeza tirou tudo sem mexer no personagem.
+- **Dois personagens num quadro** (o InvokeAI aceita uma referência latente só), 6 candidatos
+  por estratégia: `composta` 198 s — mais ukiyo-e, mas copia o layout lado a lado, duplicou o
+  Channa e rabiscou "texto"; `multi` 219 s — encena bem (os dois na mesma carruagem), estilo HQ
+  moderna; `duas-passadas` 432 s — sem ganho visível de identidade. **Padrão: `multi`**
+  (`estrategia` no roteiro, porque entra na assinatura do quadro).
+- **Rodada completa**: 12 candidatos (6 quadros × 2) em ~6,5 min, ~33 s por quadro; os 6
+  aprovados pelo QA na primeira rodada.
+- **Estilo**: a nota CLIP (âncora do roteiro − "HQ moderna") separa bem nos quadros do spike
+  (+0,058 a −0,066), mas na `multi` todos ficaram entre −0,056 e −0,115 — por isso ela só
+  **ordena**; reprova abaixo de −0,15. Não há LoRA ukiyo-e com licença comercial para Qwen ou
+  schnell (ver LICENSES.md); a LoRA de *style transfer* (Apache-2.0) com a Grande Onda de
+  Hokusai (Met, domínio público) **só desbotou as cores** — fica opcional (`estampa`).
+  Estilo e época no começo do prompt deixaram o traço mais de gravura mas perderam a cena.
+- **Anacronismo**: o Qwen pôs caminhões numa estrada da Índia antiga. `epoca` no roteiro
+  ("ancient India, 5th century BC" + "no modern objects") ajudou no teste isolado, mas na rodada
+  completa o quadro 3 ainda veio com um veículo — e sem o velho da cena.
+- **Letreiramento**: YuNet achou os protagonistas nos 18 candidatos do spike (0,87–0,92) em
+  milissegundos. Nenhum balão sobre rosto na página do piloto. A busca gulosa tomava o lugar do
+  segundo balão; a busca em feixe com sobreposição proibida resolveu.
+- **Export**: página A4 a 300 dpi + PDF + CBZ + 6 fatias de webtoon em ~5 s.
+- **Motion comic**: 7 falas, 30,6 s de fala, MP4 de 36,6 s em 52 s (TTS + QA + render); MP4 e
+  master com a mesma duração, e cada balão entra no início da sua fala (conferido quadro a
+  quadro). `render.compensar_cruzamento` corrige o dissolve, que encurtava o vídeo
+  `(n−1)×cruzamento` (o preset `sincronizado` tem a mesma deriva e ainda não usa a função).
+
+### Limites conhecidos (o operador resolve)
+
+- O QA **não confere o conteúdo da cena** (o velho do quadro 3 sumiu e passou) nem anacronismo:
+  revise `quadros/<id>/contato.png` e use `--refazer` / `escolher`.
+- Quando não há céu livre acima de quem fala, o balão vai para o lado ou para baixo da cabeça.
+- `hq motion` usa o `run` do audiolivro: a VRAM do InvokeAI é liberada antes (como no `run`).
+
 ## Pacotes por área: `genai` (2026-10-02)
 
 O pacote `audiofactory` virou **`genai`**, e a CLI virou **`genai`** — `audio-factory` continua
@@ -86,7 +160,8 @@ de área nenhuma.
 | `genai/audiolivro/` | `projeto` (criar/ingerir/`montar_script`), `pipeline`, `voices`, `legenda`, e os subpacotes `chunk`, `engines`, `narration`, `qa`, `script`, `text`, `audio` (montagem e master) |
 | `genai/video/` | `render`, `slides`, `sincronizado`, `imagem`, `imagem_qa`, `thumbnail` e a trilha: `musica`, `musica_ace`, `musica_musicgen` com os runners ao lado |
 | `genai/publish/` | `youtube` |
-| `genai/cli/` | um módulo por área (`audiolivro`, `video`, `publicar`, `fontes`, `voz`, `sistema`) |
+| `genai/hq/` | HQ: roteiro, elenco, quadros, QA, rostos, letreiro, layout, export, motion (ver "HQ: pipeline em `genai/hq`") |
+| `genai/cli/` | um módulo por área (`audiolivro`, `video`, `publicar`, `fontes`, `voz`, `hq`, `sistema`) |
 
 Para ler o histórico abaixo, que cita os caminhos antigos:
 

@@ -163,6 +163,8 @@ Proibido usar áudio de terceiros como referência de clonagem sem consentimento
 | `assets/slides/*.jpg` (52) | Gerações próprias do operador no **Midjourney** (conta `moisescomsal`, 2023, plano pago) | ✅ **Confirmado** | Os Termos do Midjourney atribuem os direitos sobre a saída ao assinante pago. Confirmado pelo operador em 2026-08-31 que a conta era paga na época das gerações. |
 | `assets/slides/*.jpg` (novas, a partir de 2026-08-31) | Geração local com FLUX.1-schnell / SD3.5, curadas via `imagem-aprovar` | ✅ Sim, sob as licenças da tabela "Pesos de imagem" acima | Sem terceiro envolvido — pesos rodam localmente, saída é do próprio operador |
 
+| Arte da HQ (`projects/<slug>/elenco`, `quadros`, `paginas`, `output`) | Geração local (FLUX.1-schnell + Qwen-Image-Edit 2511 via InvokeAI), curadoria do operador (elenco) e QA automático (quadros) | ✅ Sim, sob as licenças da tabela "Pesos de imagem" | Texto letreirado com Comic Neue (OFL). Se o roteiro usar `estampa`, a gravura de referência tem de ser de domínio público e registrada no `project.yaml` |
+
 Não há terceiro envolvido: nenhum upload de imagem alheia, nenhum banco de imagens.
 
 ## Texto
