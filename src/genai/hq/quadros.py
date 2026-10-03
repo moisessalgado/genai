@@ -149,8 +149,12 @@ def gerar(proj: Path, r: Roteiro, *, n: int = 2, estrategia: str = ESTRATEGIA_PA
                 and e.item("quadro", q.id)["state"] == "pending"]
         if not alvo:
             break
-        seeds = range(rodada * n, (rodada + 1) * n)
+        # seeds novas: depois dos candidatos que já existem (de rodadas, ou
+        # execuções, anteriores) — `--refazer` gera candidatos de verdade novos
+        seeds = {}
         for q in alvo:
+            ini = len(candidatos(proj, q.id, marcas[q.id]))
+            seeds[q.id] = range(ini, ini + n)
             e.iniciar("quadro", q.id)
         todas_refs = [p for q in alvo for p in _refs_do_quadro(proj, refs, q, estrategia)]
         with servico.refs_enviadas(c, todas_refs) as nomes:
@@ -161,7 +165,7 @@ def gerar(proj: Path, r: Roteiro, *, n: int = 2, estrategia: str = ESTRATEGIA_PA
                 w, h = q.tamanho
                 rq = [nomes[p] for p in _refs_do_quadro(proj, refs, q, estrategia)]
                 prefixo = "p1" if _duas(q, estrategia) else "cand"
-                for i in seeds:
+                for i in seeds[q.id]:
                     destino = pasta(proj, q.id) / f"{prefixo}-{m}-{i}.png"
                     final = pasta(proj, q.id) / f"cand-{m}-{i}.png"
                     if destino.exists() or final.exists():
@@ -176,7 +180,7 @@ def gerar(proj: Path, r: Roteiro, *, n: int = 2, estrategia: str = ESTRATEGIA_PA
                     progresso(f"rodada {rodada + 1}: {len(pedidos)} imagem(ns)")
                 c.gerar_lote(pedidos, progresso=progresso)
         # passada 2: corrige o personagem da direita contra a folha dele
-        segunda = [(q, i) for q in alvo if _duas(q, estrategia) for i in seeds
+        segunda = [(q, i) for q in alvo if _duas(q, estrategia) for i in seeds[q.id]
                    if not (pasta(proj, q.id) / f"cand-{marcas[q.id]}-{i}.png").exists()]
         if segunda:
             p1s = [pasta(proj, q.id) / f"p1-{marcas[q.id]}-{i}.png" for q, i in segunda]
@@ -205,6 +209,14 @@ def gerar(proj: Path, r: Roteiro, *, n: int = 2, estrategia: str = ESTRATEGIA_PA
                 e.revisar("quadro", q.id, "nenhum candidato passou no QA — "
                           f"genai hq escolher {proj.name} {q.id} <arquivo>", qa=notas)
     return relatorio
+
+
+def refazer(proj: Path, r: Roteiro, ids: list[int]) -> None:
+    """Devolve quadros à fila para gerar candidatos NOVOS (a escolha atual cai)."""
+    e = hqp.estado(proj)
+    for qid in ids:
+        if e.item("quadro", qid):
+            e.reabrir("quadro", qid)
 
 
 def escolher(proj: Path, r: Roteiro, qid: int, arquivo: Path) -> Path:

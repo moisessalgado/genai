@@ -5,7 +5,7 @@ Os comandos vivem em um módulo por área, e cada um se registra no `app` de
 """
 from __future__ import annotations
 
-from . import audiolivro, video, publicar, fontes, voz, sistema  # noqa: F401  (registram os comandos)
+from . import audiolivro, video, publicar, fontes, voz, hq, sistema  # noqa: F401  (registram os comandos)
 from .app import app
 
 __all__ = ["app"]

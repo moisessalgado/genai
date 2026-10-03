@@ -331,6 +331,529 @@
     }
    ]
   },
+  "hq": {
+   "ajuda": "HQ: roteiro, elenco, quadros, páginas, export e motion comic",
+   "parametros": [],
+   "subcomandos": {
+    "elenco": {
+     "ajuda": "Folhas-modelo (FLUX) de quem ainda não tem folha aprovada.",
+     "parametros": [
+      {
+       "nome": "slug",
+       "tipo": "argument",
+       "click_tipo": "str",
+       "opts": [
+        "slug"
+       ],
+       "secundarias": [],
+       "obrigatorio": true,
+       "multiplo": false,
+       "padrao": null
+      },
+      {
+       "nome": "n",
+       "tipo": "option",
+       "click_tipo": "int",
+       "opts": [
+        "--n"
+       ],
+       "secundarias": [],
+       "obrigatorio": false,
+       "multiplo": false,
+       "padrao": 4,
+       "flag": false,
+       "ajuda": "candidatos por personagem"
+      },
+      {
+       "nome": "personagem",
+       "tipo": "option",
+       "click_tipo": "str",
+       "opts": [
+        "--personagem"
+       ],
+       "secundarias": [],
+       "obrigatorio": false,
+       "multiplo": true,
+       "padrao": null,
+       "flag": false,
+       "ajuda": "só estes (repetível)"
+      }
+     ]
+    },
+    "elenco-aprovar": {
+     "ajuda": "Aprova folha (cand-*.png) ou ref final (limpo-*.png, aprovado.png, retoque).\n\ncand-*.png vira a folha aprovada; qualquer outra imagem vira a ref final\nusada nos quadros.",
+     "parametros": [
+      {
+       "nome": "slug",
+       "tipo": "argument",
+       "click_tipo": "str",
+       "opts": [
+        "slug"
+       ],
+       "secundarias": [],
+       "obrigatorio": true,
+       "multiplo": false,
+       "padrao": null
+      },
+      {
+       "nome": "personagem",
+       "tipo": "argument",
+       "click_tipo": "str",
+       "opts": [
+        "personagem"
+       ],
+       "secundarias": [],
+       "obrigatorio": true,
+       "multiplo": false,
+       "padrao": null
+      },
+      {
+       "nome": "arquivo",
+       "tipo": "argument",
+       "click_tipo": "path",
+       "opts": [
+        "arquivo"
+       ],
+       "secundarias": [],
+       "obrigatorio": true,
+       "multiplo": false,
+       "padrao": null
+      }
+     ]
+    },
+    "escolher": {
+     "ajuda": "Escolha humana de um quadro (um candidato, ou um retoque do Canvas).",
+     "parametros": [
+      {
+       "nome": "slug",
+       "tipo": "argument",
+       "click_tipo": "str",
+       "opts": [
+        "slug"
+       ],
+       "secundarias": [],
+       "obrigatorio": true,
+       "multiplo": false,
+       "padrao": null
+      },
+      {
+       "nome": "quadro",
+       "tipo": "argument",
+       "click_tipo": "int",
+       "opts": [
+        "quadro"
+       ],
+       "secundarias": [],
+       "obrigatorio": true,
+       "multiplo": false,
+       "padrao": null
+      },
+      {
+       "nome": "arquivo",
+       "tipo": "argument",
+       "click_tipo": "path",
+       "opts": [
+        "arquivo"
+       ],
+       "secundarias": [],
+       "obrigatorio": true,
+       "multiplo": false,
+       "padrao": null
+      }
+     ]
+    },
+    "exportar": {
+     "ajuda": "PDF e CBZ (das páginas) e webtoon (quadros re-letreirados a 800 px).",
+     "parametros": [
+      {
+       "nome": "slug",
+       "tipo": "argument",
+       "click_tipo": "str",
+       "opts": [
+        "slug"
+       ],
+       "secundarias": [],
+       "obrigatorio": true,
+       "multiplo": false,
+       "padrao": null
+      },
+      {
+       "nome": "formatos",
+       "tipo": "option",
+       "click_tipo": "str",
+       "opts": [
+        "--formatos"
+       ],
+       "secundarias": [],
+       "obrigatorio": false,
+       "multiplo": false,
+       "padrao": "pdf,cbz,webtoon",
+       "flag": false,
+       "ajuda": "pdf, cbz, webtoon — separados por vírgula"
+      }
+     ]
+    },
+    "limpar": {
+     "ajuda": "Tira caligrafia, selos e cartuchos da folha aprovada (Qwen Edit).",
+     "parametros": [
+      {
+       "nome": "slug",
+       "tipo": "argument",
+       "click_tipo": "str",
+       "opts": [
+        "slug"
+       ],
+       "secundarias": [],
+       "obrigatorio": true,
+       "multiplo": false,
+       "padrao": null
+      },
+      {
+       "nome": "n",
+       "tipo": "option",
+       "click_tipo": "int",
+       "opts": [
+        "--n"
+       ],
+       "secundarias": [],
+       "obrigatorio": false,
+       "multiplo": false,
+       "padrao": 2,
+       "flag": false,
+       "ajuda": "candidatos por personagem"
+      },
+      {
+       "nome": "personagem",
+       "tipo": "option",
+       "click_tipo": "str",
+       "opts": [
+        "--personagem"
+       ],
+       "secundarias": [],
+       "obrigatorio": false,
+       "multiplo": true,
+       "padrao": null,
+       "flag": false,
+       "ajuda": null
+      }
+     ]
+    },
+    "motion": {
+     "ajuda": "Narra os textos (TTS do audiolivro) e renderiza o motion comic em output/.",
+     "parametros": [
+      {
+       "nome": "slug",
+       "tipo": "argument",
+       "click_tipo": "str",
+       "opts": [
+        "slug"
+       ],
+       "secundarias": [],
+       "obrigatorio": true,
+       "multiplo": false,
+       "padrao": null
+      },
+      {
+       "nome": "gpu",
+       "tipo": "option",
+       "click_tipo": "boolean",
+       "opts": [
+        "--gpu"
+       ],
+       "secundarias": [
+        "--cpu"
+       ],
+       "obrigatorio": false,
+       "multiplo": false,
+       "padrao": true,
+       "flag": true,
+       "ajuda": null
+      },
+      {
+       "nome": "no_qa",
+       "tipo": "option",
+       "click_tipo": "boolean",
+       "opts": [
+        "--no-qa"
+       ],
+       "secundarias": [],
+       "obrigatorio": false,
+       "multiplo": false,
+       "padrao": false,
+       "flag": true,
+       "ajuda": "pula o QA da narração"
+      },
+      {
+       "nome": "nome",
+       "tipo": "option",
+       "click_tipo": "str",
+       "opts": [
+        "--nome"
+       ],
+       "secundarias": [],
+       "obrigatorio": false,
+       "multiplo": false,
+       "padrao": null,
+       "flag": false,
+       "ajuda": "nome do MP4 (padrão: o título)"
+      }
+     ]
+    },
+    "novo": {
+     "ajuda": "Cria projects/<slug>/ com project.yaml (preencha `rights` antes de publicar).",
+     "parametros": [
+      {
+       "nome": "slug",
+       "tipo": "argument",
+       "click_tipo": "str",
+       "opts": [
+        "slug"
+       ],
+       "secundarias": [],
+       "obrigatorio": true,
+       "multiplo": false,
+       "padrao": null
+      },
+      {
+       "nome": "titulo",
+       "tipo": "option",
+       "click_tipo": "str",
+       "opts": [
+        "--titulo"
+       ],
+       "secundarias": [],
+       "obrigatorio": true,
+       "multiplo": false,
+       "padrao": null,
+       "flag": false,
+       "ajuda": "título da HQ"
+      },
+      {
+       "nome": "fonte",
+       "tipo": "option",
+       "click_tipo": "path",
+       "opts": [
+        "--from"
+       ],
+       "secundarias": [],
+       "obrigatorio": false,
+       "multiplo": false,
+       "padrao": null,
+       "flag": false,
+       "ajuda": "texto de origem (.txt)"
+      },
+      {
+       "nome": "narrator",
+       "tipo": "option",
+       "click_tipo": "str",
+       "opts": [
+        "--narrator"
+       ],
+       "secundarias": [],
+       "obrigatorio": false,
+       "multiplo": false,
+       "padrao": null,
+       "flag": false,
+       "ajuda": "voz dos recordatórios no motion comic"
+      }
+     ]
+    },
+    "paginas": {
+     "ajuda": "Diagrama e letreira as páginas em paginas/ (PNG no dpi do formato).",
+     "parametros": [
+      {
+       "nome": "slug",
+       "tipo": "argument",
+       "click_tipo": "str",
+       "opts": [
+        "slug"
+       ],
+       "secundarias": [],
+       "obrigatorio": true,
+       "multiplo": false,
+       "padrao": null
+      }
+     ]
+    },
+    "quadros": {
+     "ajuda": "Gera os quadros com as refs do elenco; o QA escolhe o melhor de cada um.",
+     "parametros": [
+      {
+       "nome": "slug",
+       "tipo": "argument",
+       "click_tipo": "str",
+       "opts": [
+        "slug"
+       ],
+       "secundarias": [],
+       "obrigatorio": true,
+       "multiplo": false,
+       "padrao": null
+      },
+      {
+       "nome": "n",
+       "tipo": "option",
+       "click_tipo": "int",
+       "opts": [
+        "--n"
+       ],
+       "secundarias": [],
+       "obrigatorio": false,
+       "multiplo": false,
+       "padrao": 2,
+       "flag": false,
+       "ajuda": "candidatos por quadro e rodada"
+      },
+      {
+       "nome": "estrategia",
+       "tipo": "option",
+       "click_tipo": "str",
+       "opts": [
+        "--estrategia"
+       ],
+       "secundarias": [],
+       "obrigatorio": false,
+       "multiplo": false,
+       "padrao": null,
+       "flag": false,
+       "ajuda": "dois personagens: duas-passadas, multi ou composta"
+      },
+      {
+       "nome": "ids",
+       "tipo": "option",
+       "click_tipo": "str",
+       "opts": [
+        "--ids"
+       ],
+       "secundarias": [],
+       "obrigatorio": false,
+       "multiplo": false,
+       "padrao": null,
+       "flag": false,
+       "ajuda": "só estes quadros, ex.: 1,3-5"
+      },
+      {
+       "nome": "rodadas",
+       "tipo": "option",
+       "click_tipo": "int",
+       "opts": [
+        "--rodadas"
+       ],
+       "secundarias": [],
+       "obrigatorio": false,
+       "multiplo": false,
+       "padrao": 2,
+       "flag": false,
+       "ajuda": "rodadas se o QA reprovar todos"
+      },
+      {
+       "nome": "refazer",
+       "tipo": "option",
+       "click_tipo": "boolean",
+       "opts": [
+        "--refazer"
+       ],
+       "secundarias": [],
+       "obrigatorio": false,
+       "multiplo": false,
+       "padrao": false,
+       "flag": true,
+       "ajuda": "gera candidatos novos para --ids mesmo já escolhidos"
+      }
+     ]
+    },
+    "roteiro": {
+     "ajuda": "O LLM rascunha o roteiro.yaml a partir do texto de origem do projeto.",
+     "parametros": [
+      {
+       "nome": "slug",
+       "tipo": "argument",
+       "click_tipo": "str",
+       "opts": [
+        "slug"
+       ],
+       "secundarias": [],
+       "obrigatorio": true,
+       "multiplo": false,
+       "padrao": null
+      },
+      {
+       "nome": "paginas",
+       "tipo": "option",
+       "click_tipo": "int",
+       "opts": [
+        "--paginas"
+       ],
+       "secundarias": [],
+       "obrigatorio": false,
+       "multiplo": false,
+       "padrao": 1,
+       "flag": false,
+       "ajuda": "número de páginas"
+      },
+      {
+       "nome": "estilo",
+       "tipo": "option",
+       "click_tipo": "str",
+       "opts": [
+        "--estilo"
+       ],
+       "secundarias": [],
+       "obrigatorio": false,
+       "multiplo": false,
+       "padrao": null,
+       "flag": false,
+       "ajuda": "bloco de estilo (inglês); padrão: ukiyo-e"
+      },
+      {
+       "nome": "ancora_estilo",
+       "tipo": "option",
+       "click_tipo": "str",
+       "opts": [
+        "--ancora-estilo"
+       ],
+       "secundarias": [],
+       "obrigatorio": false,
+       "multiplo": false,
+       "padrao": null,
+       "flag": false,
+       "ajuda": "frase curta do estilo para o QA (CLIP); com --estilo próprio, sem âncora o QA não julga estilo"
+      },
+      {
+       "nome": "forcar",
+       "tipo": "option",
+       "click_tipo": "boolean",
+       "opts": [
+        "--forcar"
+       ],
+       "secundarias": [],
+       "obrigatorio": false,
+       "multiplo": false,
+       "padrao": false,
+       "flag": true,
+       "ajuda": "sobrescreve um roteiro.yaml existente (guarda o anterior)"
+      }
+     ]
+    },
+    "status": {
+     "ajuda": "Onde cada personagem e quadro está.",
+     "parametros": [
+      {
+       "nome": "slug",
+       "tipo": "argument",
+       "click_tipo": "str",
+       "opts": [
+        "slug"
+       ],
+       "secundarias": [],
+       "obrigatorio": true,
+       "multiplo": false,
+       "padrao": null
+      }
+     ]
+    }
+   }
+  },
   "imagem": {
    "ajuda": "Gera candidatos em cache/imagens/, para revisar antes de `imagem-aprovar`.\n\nNão escreve direto no acervo: nem toda imagem gerada presta, e curadoria é\nhumana. Ver `imagem-aprovar` para o passo seguinte.",
    "parametros": [

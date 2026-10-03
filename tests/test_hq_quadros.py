@@ -122,3 +122,13 @@ def test_qa_real_reprova_quadro_vazio_e_falta_de_rosto(tmp_path):
     notas = qa.avaliar([vazio], 1, None)
     assert notas["vazio.png"] == {"ok": False, "motivo": "vazio"}
     assert qa.melhor(notas) is None
+
+
+def test_refazer_gera_candidatos_com_seeds_novas(proj, monkeypatch):
+    p, r, falso = proj
+    _qa_aprova(monkeypatch)
+    quadros.gerar(p, r, n=2, ids=[6])
+    quadros.refazer(p, r, [6])
+    quadros.gerar(p, r, n=2, ids=[6])
+    assert len(quadros.candidatos(p, 6)) == 4
+    assert len({g[5] for g in falso.grafos}) == 4  # quatro seeds distintas
