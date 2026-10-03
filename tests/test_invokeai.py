@@ -97,3 +97,16 @@ def test_servidor_fora_do_ar_e_erro_claro():
     assert not c.disponivel()
     with pytest.raises(invokeai.InvokeAIErro, match="fora do ar"):
         c.versao()
+
+
+def test_liberar_vram_esvazia_o_cache_de_modelos():
+    c = Falso()
+    c._req = lambda m, p, *a, **k: c.log.append((m, p))
+    c.liberar_vram()
+    assert c.log == [("POST", "/api/v2/models/empty_model_cache")]
+
+
+def test_liberar_vram_com_servico_fora_do_ar_nao_e_erro(monkeypatch):
+    monkeypatch.setattr(invokeai, "cliente",
+                        lambda: invokeai.InvokeAI(base="http://127.0.0.1:9", timeout_s=1))
+    assert invokeai.liberar_vram_se_no_ar() is False

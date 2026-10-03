@@ -10,6 +10,7 @@ from rich.table import Table
 
 from .. import project as proj_mod
 from ..config import settings
+from ..servicos import invokeai
 from ..engines.chatterbox_engine import ChatterboxEngine
 from ..pipeline import Runner
 from ..qa.verify import Verifier
@@ -146,6 +147,10 @@ def _etapa_run(p: Path, *, chapters: str | None = None, no_qa: bool = False,
                       ", ".join(f"{k}→{v}" for k, v in s.cast.items()))
     if free_ollama:
         _liberar_ollama()
+    # O InvokeAI segura a VRAM entre gerações (7 GB medidos depois de um lote
+    # FLUX); com 2 workers do TTS isso estoura os 16 GB. Fora do ar, nada a fazer.
+    if invokeai.liberar_vram_se_no_ar():
+        console.print("[dim]InvokeAI: VRAM liberada para o TTS[/]")
 
     fabrica = lambda: ChatterboxEngine(s.params, use_ptbr_pack=ptbr_pack)
     runner = Runner(p, s, fabrica(), None if no_qa else Verifier(), voice_ref=ref,

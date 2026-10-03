@@ -80,6 +80,12 @@ class InvokeAI:
         except InvokeAIErro:
             return False
 
+    def liberar_vram(self) -> None:
+        """Descarrega os modelos que o InvokeAI mantém na GPU entre gerações
+        (medido: 7 GB parados depois de um lote FLUX, o bastante para o
+        ACE-Step estourar os 16 GB). A próxima geração recarrega sozinha."""
+        self._req("POST", "/api/v2/models/empty_model_cache")
+
     def modelo(self, nome: str) -> dict:
         if self._modelos is None:
             self._modelos = self._get("/api/v2/models/")["models"]
@@ -238,6 +244,16 @@ class InvokeAI:
 
 
 _padrao: InvokeAI | None = None
+
+
+def liberar_vram_se_no_ar() -> bool:
+    """Antes de qualquer trabalho local de GPU (TTS, música): pede ao InvokeAI
+    que solte a VRAM. Fora do ar não é erro — não há nada a soltar."""
+    try:
+        cliente().liberar_vram()
+        return True
+    except InvokeAIErro:
+        return False
 
 
 def cliente() -> InvokeAI:
