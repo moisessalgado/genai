@@ -107,13 +107,13 @@ def montar_script(proj: Path, lexicon: dict[str, str] | None = None,
         for par in paragrafos(corpo):
             partes = dividir_por_papel(par)
             if elenco:
-                from ..audiolivro.narration.elenco import aplicar_elenco
+                from .narration.elenco import aplicar_elenco
 
                 partes = aplicar_elenco(partes, elenco, cache=elenco_cache)
                 personagens_atribuidos += sum(1 for p, _ in partes if p.startswith("personagem_"))
             for papel, fonte in partes:
                 if usar_llm:
-                    from ..audiolivro.narration.llm import resolver
+                    from .narration.llm import resolver
 
                     amb = detect_ambiguous(fonte)
                     ambiguos += len(amb)

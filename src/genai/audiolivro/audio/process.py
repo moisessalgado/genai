@@ -14,6 +14,8 @@ from pathlib import Path
 import numpy as np
 import soundfile as sf
 
+from ...core.midia import duracao  # noqa: F401  (reexportado: process.duracao)
+
 # Pausas estruturais, em milissegundos (silencio digital, nao gerado pelo TTS)
 # 400 ms era ritmo de audiolivro comum. Estes textos pedem outra coisa: o
 # operador pediu tempo para o ouvinte compreender o que foi dito, e 900 ms foi o
@@ -152,13 +154,6 @@ def montar_com_marcas(segmentos: list[Segmento], sample_rate: int,
 def _ffmpeg(args: list[str]) -> subprocess.CompletedProcess:
     return subprocess.run(["ffmpeg", "-hide_banner", "-loglevel", "error", "-y", *args],
                           capture_output=True, text=True, check=True)
-
-
-def duracao(path: Path) -> float:
-    return float(subprocess.run(
-        ["ffprobe", "-v", "error", "-show_entries", "format=duration",
-         "-of", "csv=p=0", str(path)],
-        capture_output=True, text=True, check=True).stdout.strip())
 
 
 def concatenar(partes: list[Path], destino: Path) -> Path:

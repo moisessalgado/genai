@@ -12,7 +12,7 @@ import re
 import subprocess
 from pathlib import Path
 
-from ..audiolivro.audio.process import duracao
+from ..core.midia import duracao
 from . import slides as slides_mod
 
 # YouTube: minimo 640x360, e recusa arquivo abaixo de ~1 KB.
