@@ -10,7 +10,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 # -- aprovacao humana de chunk reprovado --------------------------------------
 
 def _store_com_chunk(tmp_path, estado="needs_review"):
-    from audiofactory.store.db import Store
+    from genai.store.db import Store
     s = Store(tmp_path / "state.db")
     s.conn.execute("INSERT INTO chunks(chunk_id, chapter, idx, text, source, state) "
                    "VALUES ('ch01/00000-abc', 1, 0, 'Jiddu', 'Jiddu', ?)", (estado,))

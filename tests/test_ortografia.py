@@ -13,7 +13,7 @@ from urllib import error
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
-from audiofactory.narration import ortografia
+from genai.narration import ortografia
 
 
 def test_validar_aceita_forma_moderna_plausivel():

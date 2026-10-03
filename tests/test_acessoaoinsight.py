@@ -18,7 +18,7 @@ import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
-from audiofactory.ingest.acessoaoinsight import (
+from genai.ingest.acessoaoinsight import (
     codigo_da_url, decodificar, extrair, normalizar_url,
 )
 

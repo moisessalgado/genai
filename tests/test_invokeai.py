@@ -8,7 +8,7 @@ import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
-from audiofactory.servicos import invokeai  # noqa: E402
+from genai.servicos import invokeai  # noqa: E402
 
 MODELOS = [{"key": f"k-{n}", "hash": "h", "name": n, "base": "b", "type": "t", "extra": 1}
            for n in (invokeai.FLUX_SCHNELL, invokeai.FLUX_VAE, invokeai.FLUX_T5,

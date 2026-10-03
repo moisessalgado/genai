@@ -12,7 +12,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
-from audiofactory.text.roles import (
+from genai.text.roles import (
     PAPEL_CITACAO, PAPEL_NARRADOR, dividir_por_papel, tem_dialogo,
 )
 

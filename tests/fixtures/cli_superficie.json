@@ -1,5 +1,5 @@
 {
- "ajuda": "Audio Factory — audiolivros narrados por IA, 100% local",
+ "ajuda": "genai — audiolivros, vídeos para o YouTube e HQ com IA, 100% local",
  "parametros": [
   {
    "nome": "install_completion",

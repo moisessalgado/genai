@@ -21,8 +21,8 @@ from bs4 import BeautifulSoup
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
-from audiofactory.ingest import wikisource as wk
-from audiofactory.ingest.loader import detectar_capitulos
+from genai.ingest import wikisource as wk
+from genai.ingest.loader import detectar_capitulos
 
 FIXTURES = Path(__file__).parent / "fixtures" / "wikisource"
 CAPITULO_HTML = FIXTURES / "narizinho-arrebitado.html"

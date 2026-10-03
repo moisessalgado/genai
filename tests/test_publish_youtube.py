@@ -13,7 +13,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
-from audiofactory.publish.youtube import (DISCLOSURE, descricao, formatar_keywords,
+from genai.publish.youtube import (DISCLOSURE, descricao, formatar_keywords,
                                           mesclar_branding, metadados)
 
 

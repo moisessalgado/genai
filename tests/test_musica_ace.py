@@ -16,7 +16,7 @@ import soundfile as sf
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
-from audiofactory.audio.musica_ace import (
+from genai.audio.musica_ace import (
     CRUZAMENTO_S, DIP_CENTRO_HZ, PALETAS, SAMPLE_RATE, _seed, moldar, montar,
     prompts,
 )
@@ -163,7 +163,7 @@ def test_dip_nao_e_um_corte_com_borda():
 
 def test_dip_e_muito_mais_raso_que_o_do_sintetizador():
     """O contraste que motivou a troca, medido lado a lado."""
-    from audiofactory.audio.musica import _moldar_para_voz
+    from genai.audio.musica import _moldar_para_voz
 
     sr = SAMPLE_RATE
     t = np.arange(int(4.0 * sr)) / sr

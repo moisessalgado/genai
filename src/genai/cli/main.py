@@ -1,4 +1,4 @@
-"""CLI do audio-factory (TDD 13). Exposta no dia a dia como `iam voice`.
+"""CLI `genai` (antes `audio-factory`, nome que segue valendo como apelido).
 
 Os comandos vivem em um módulo por área, e cada um se registra no `app` de
 `cli/app.py` ao ser importado. A ordem dos imports abaixo é a ordem do `--help`.

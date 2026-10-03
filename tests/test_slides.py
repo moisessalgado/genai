@@ -15,8 +15,8 @@ import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
-from audiofactory.video import slides
-from audiofactory.video.render import LARGURA, ALTURA, presets, renderizar
+from genai.video import slides
+from genai.video.render import LARGURA, ALTURA, presets, renderizar
 
 
 @pytest.fixture

@@ -13,8 +13,8 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
-from audiofactory.cli.fontes import ETAPAS
-from audiofactory.cli.publicar import _etapa_publish
+from genai.cli.fontes import ETAPAS
+from genai.cli.publicar import _etapa_publish
 
 
 def _projeto(tmp_path: Path) -> Path:

@@ -19,7 +19,7 @@ from typer.testing import CliRunner
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
-from audiofactory.cli.main import app  # noqa: E402
+from genai.cli.main import app  # noqa: E402
 
 FOTO = Path(__file__).parent / "fixtures" / "cli_superficie.json"
 

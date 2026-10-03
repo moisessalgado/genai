@@ -7,10 +7,10 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
-from audiofactory.qa.speaker import (DUR_PLENA_S, MIN_JULGAVEL_S,
+from genai.qa.speaker import (DUR_PLENA_S, MIN_JULGAVEL_S,
                                      SIMILARIDADE_MINIMA,
                                      limiar_por_duracao)
-from audiofactory.qa.verify import (FATOR_MAX, FATOR_MIN,
+from genai.qa.verify import (FATOR_MAX, FATOR_MIN,
                                     duracao_esperada)
 
 # -- duracao esperada: overhead fixo + ritmo ----------------------------------
@@ -86,8 +86,8 @@ def test_abaixo_do_minimo_julgavel_a_checagem_nao_opina():
 
 import numpy as np
 
-from audiofactory.qa.policy import Tentativa, escolher
-from audiofactory.qa.verify import SILENCIO_MAX_S, QAResult
+from genai.qa.policy import Tentativa, escolher
+from genai.qa.verify import SILENCIO_MAX_S, QAResult
 
 
 class ASRFalso:
@@ -105,7 +105,7 @@ class ASRFalso:
 
 
 def _check(segmentos, texto, dur_s=20.9, sr=24000):
-    from audiofactory.qa.verify import Verifier
+    from genai.qa.verify import Verifier
 
     v = Verifier()
     v.transcribe_com_tempos = ASRFalso(segmentos, texto).transcribe_com_tempos

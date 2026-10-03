@@ -6,8 +6,8 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
-from audiofactory.video.slides import _duracoes, entradas, filtro
-from audiofactory.video.sincronizado import janelas_do_srt
+from genai.video.slides import _duracoes, entradas, filtro
+from genai.video.sincronizado import janelas_do_srt
 
 SRT_EXEMPLO = """1
 00:00:00,000 --> 00:00:03,000

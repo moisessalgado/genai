@@ -82,58 +82,6 @@ wheels = [
 ]
 
 [[package]]
-name = "audiofactory"
-version = "0.1.0"
-source = { editable = "." }
-dependencies = [
-    { name = "beautifulsoup4" },
-    { name = "chatterbox-tts" },
-    { name = "ebooklib" },
-    { name = "faster-whisper" },
-    { name = "google-api-python-client" },
-    { name = "google-auth-oauthlib" },
-    { name = "kokoro" },
-    { name = "num2words" },
-    { name = "numpy", version = "1.26.4", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.13'" },
-    { name = "numpy", version = "2.5.2", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.13'" },
-    { name = "pydantic" },
-    { name = "pymupdf" },
-    { name = "pyyaml" },
-    { name = "resampy" },
-    { name = "rich" },
-    { name = "soundfile" },
-    { name = "typer" },
-]
-
-[package.dev-dependencies]
-dev = [
-    { name = "pytest" },
-]
-
-[package.metadata]
-requires-dist = [
-    { name = "beautifulsoup4" },
-    { name = "chatterbox-tts" },
-    { name = "ebooklib" },
-    { name = "faster-whisper" },
-    { name = "google-api-python-client" },
-    { name = "google-auth-oauthlib" },
-    { name = "kokoro" },
-    { name = "num2words" },
-    { name = "numpy" },
-    { name = "pydantic", specifier = ">=2" },
-    { name = "pymupdf" },
-    { name = "pyyaml" },
-    { name = "resampy" },
-    { name = "rich" },
-    { name = "soundfile" },
-    { name = "typer" },
-]
-
-[package.metadata.requires-dev]
-dev = [{ name = "pytest" }]
-
-[[package]]
 name = "audioop-lts"
 version = "0.2.2"
 source = { registry = "https://pypi.org/simple" }
@@ -879,6 +827,58 @@ sdist = { url = "https://files.pythonhosted.org/packages/00/78/f34251dadb8f39212
 wheels = [
     { url = "https://files.pythonhosted.org/packages/fd/3c/6a2bf344106328fd04963664a60b9bb6496fc25df8e962fcdc1367285fb9/fsspec-2026.7.0-py3-none-any.whl", hash = "sha256:b57ddbafedfaef7018c1ecab32aa200a9d7ca26b77965f64e48b70061249d279", size = 206583, upload-time = "2026-07-28T16:34:49.538Z" },
 ]
+
+[[package]]
+name = "genai"
+version = "0.1.0"
+source = { editable = "." }
+dependencies = [
+    { name = "beautifulsoup4" },
+    { name = "chatterbox-tts" },
+    { name = "ebooklib" },
+    { name = "faster-whisper" },
+    { name = "google-api-python-client" },
+    { name = "google-auth-oauthlib" },
+    { name = "kokoro" },
+    { name = "num2words" },
+    { name = "numpy", version = "1.26.4", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.13'" },
+    { name = "numpy", version = "2.5.2", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.13'" },
+    { name = "pydantic" },
+    { name = "pymupdf" },
+    { name = "pyyaml" },
+    { name = "resampy" },
+    { name = "rich" },
+    { name = "soundfile" },
+    { name = "typer" },
+]
+
+[package.dev-dependencies]
+dev = [
+    { name = "pytest" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "beautifulsoup4" },
+    { name = "chatterbox-tts" },
+    { name = "ebooklib" },
+    { name = "faster-whisper" },
+    { name = "google-api-python-client" },
+    { name = "google-auth-oauthlib" },
+    { name = "kokoro" },
+    { name = "num2words" },
+    { name = "numpy" },
+    { name = "pydantic", specifier = ">=2" },
+    { name = "pymupdf" },
+    { name = "pyyaml" },
+    { name = "resampy" },
+    { name = "rich" },
+    { name = "soundfile" },
+    { name = "typer" },
+]
+
+[package.metadata.requires-dev]
+dev = [{ name = "pytest" }]
 
 [[package]]
 name = "google-api-core"

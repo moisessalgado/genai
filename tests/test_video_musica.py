@@ -9,8 +9,8 @@ import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
-from audiofactory.audio.musica import SAMPLE_RATE, gerar_ambiente
-from audiofactory.video.render import presets, renderizar
+from genai.audio.musica import SAMPLE_RATE, gerar_ambiente
+from genai.video.render import presets, renderizar
 
 # Espectro medido na narração deste canal (2 min do sutta), em % de energia.
 VOZ = {(300, 700): 49.5, (150, 300): 18.8, (700, 1500): 15.7, (80, 150): 9.8}

@@ -15,7 +15,7 @@ def test_legenda_quebra_na_pausa_da_fala_e_nao_na_contagem_de_letras():
     """Regressão: repartir uma legenda longa proporcionalmente aos caracteres
     supõe fala com taxa constante de letras por segundo. Não tem — e o erro
     aparece como legenda adiantada em relação ao áudio."""
-    from audiofactory.video.legenda import cues
+    from genai.video.legenda import cues
 
     marcas = [(0.0, 20.0)]
     textos = ["Palavra " * 30]
@@ -33,7 +33,7 @@ def test_legenda_quebra_na_pausa_da_fala_e_nao_na_contagem_de_letras():
 
 def test_legenda_sem_pausa_por_perto_mantem_o_alvo_proporcional():
     """O ímã só puxa se houver pausa dentro da janela; longe dela, nada muda."""
-    from audiofactory.video.legenda import cues
+    from genai.video.legenda import cues
 
     marcas = [(0.0, 20.0)]
     textos = ["Palavra " * 30]
@@ -44,7 +44,7 @@ def test_legenda_sem_pausa_por_perto_mantem_o_alvo_proporcional():
 
 def test_legenda_nunca_volta_no_tempo():
     """Duas quebras não podem escolher a mesma pausa, nem sair de ordem."""
-    from audiofactory.video.legenda import cues
+    from genai.video.legenda import cues
 
     marcas = [(0.0, 40.0)]
     textos = ["Palavra " * 90]
@@ -59,7 +59,7 @@ def test_legenda_nunca_tem_duracao_zero():
     """Regressão medida no capítulo real: 44 das 339 legendas saíam com duração
     zero ou negativa — texto que nunca chega a aparecer na tela. O ímã consumia
     o tempo do pedaço seguinte quando o alvo proporcional já estava atrasado."""
-    from audiofactory.video.legenda import MIN_CUE_S, cues
+    from genai.video.legenda import MIN_CUE_S, cues
 
     marcas = [(0.0, 6.0)]                     # curto para o tanto de texto
     textos = ["Palavra " * 60]
@@ -76,7 +76,7 @@ def test_legenda_recupera_a_grafia_escondida_pelo_respelling():
     """O `text` vai respelado para o motor pronunciar; na tela tem de aparecer a
     grafia de verdade. Defeito visto pelo operador no vídeo: a abertura exibia
     'dama tchaca pavátana súta'."""
-    from audiofactory.video.legenda import desfazer_lexico
+    from genai.video.legenda import desfazer_lexico
 
     lex = {"Dhammacakkapavattana": "dama tchaca pavátana", "Sutta": "súta",
            "sutta": "súta", "Tathagata": "tatágata", "Kondañña": "condánha"}
@@ -88,7 +88,7 @@ def test_legenda_recupera_a_grafia_escondida_pelo_respelling():
 def test_legenda_nao_troca_pedaco_de_palavra():
     """A substituição é por palavra inteira: 'súta' dentro de outra palavra não
     pode virar 'Sutta'."""
-    from audiofactory.video.legenda import desfazer_lexico
+    from genai.video.legenda import desfazer_lexico
 
     assert desfazer_lexico("consúmio", {"Sutta": "súta"}) == "consúmio"
 
@@ -97,7 +97,7 @@ def test_legenda_nao_usa_o_source_do_segmento():
     """`source` guarda o PARÁGRAFO inteiro, repetido em cada pedaço cortado dele
     — no ch01, 25.914 caracteres contra 7.527 de `text`. Usá-lo faz a legenda
     exibir texto ainda não falado, que é como ela 'adianta'."""
-    from audiofactory.video.legenda import cues
+    from genai.video.legenda import cues
 
     paragrafo = "Uma frase. " * 12
     pedaco = "Uma frase."

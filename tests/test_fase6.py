@@ -9,14 +9,14 @@ import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
-from audiofactory.audio.process import chapters_txt
-from audiofactory.ingest.loader import (_bordas_repetidas, _unir_linhas, detectar_capitulos,
+from genai.audio.process import chapters_txt
+from genai.ingest.loader import (_bordas_repetidas, _unir_linhas, detectar_capitulos,
                                         limpar, ler)
-from audiofactory.pipeline import _repartir
-from audiofactory.qa.policy import Tentativa, escolher, deve_repetir
+from genai.pipeline import _repartir
+from genai.qa.policy import Tentativa, escolher, deve_repetir
 
 
-from audiofactory.qa.verify import QAResult
+from genai.qa.verify import QAResult
 
 
 AUDIO = np.zeros(2400, dtype=np.float32)
