@@ -30,6 +30,7 @@ from pathlib import Path
 import numpy as np
 
 from ..config import settings
+from ..servicos import invokeai
 from .musica import SAMPLE_RATE, _ffmpeg
 from .musica_ace import _por_pico, moldar, montar  # genéricas, não específicas do ACE
 
@@ -185,9 +186,8 @@ def gerar_pecas(paleta: str = "contemplativo", n: int = N_PECAS,
     if not disponivel():
         raise RuntimeError(
             f"venv de música (MusicGen) ausente em {VENV} — rode `uv venv "
-            f"--python 3.12 .venv-musica-mg && uv pip install --python "
-            f".venv-musica-mg/bin/python transformers accelerate soundfile "
-            f"scipy sentencepiece`")
+            f"--python 3.12 {VENV} && uv pip install --python {VENV}/bin/python "
+            f"-r envs/musica-musicgen.txt` (ou ajuste `[venvs] musica_mg` no vf.toml)")
     CACHE.mkdir(parents=True, exist_ok=True)
     ACERVO.mkdir(parents=True, exist_ok=True)
     ps = prompts(paleta)
@@ -218,6 +218,8 @@ def _rodar(pecas: list[dict], peca_s: float) -> None:
     pedido = {"pecas": pecas, "duracao_s": peca_s, "guidance": GUIDANCE,
               "checkpoint": CHECKPOINT, "hf_home": str(settings().hf_home)}
     runner = Path(__file__).with_name("_musicgen_runner.py")
+    # O InvokeAI segura a VRAM entre geracoes; o runner precisa dela inteira.
+    invokeai.liberar_vram_se_no_ar()
     r = subprocess.run([str(VENV / "bin" / "python"), str(runner), json.dumps(pedido)],
                        capture_output=True, text=True)
     if r.returncode != 0:

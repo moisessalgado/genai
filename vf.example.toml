@@ -12,12 +12,13 @@
 # lexicon  = "lexicon"
 # books    = "books"
 # config   = "config"           # credenciais do YouTube
-# hf_home  = "~/ai/hf"          # padrão: $HF_HOME, senão <raiz>/models
+# hf_home  = "~/ai/hf"          # padrão: $HF_HOME, senão ~/ai/hf
 
 [venvs]
 # Runners isolados (subprocesso que troca JSON/arquivo; nenhum objeto atravessa).
-# musica    = ".venv-musica"     # ACE-Step
-# musica_mg = ".venv-musica-mg"  # MusicGen
+# Recriar a partir de envs/*.txt (ver o cabeçalho de cada arquivo).
+# musica    = "~/ai/envs/musica-ace"       # ACE-Step
+# musica_mg = "~/ai/envs/musica-musicgen"  # MusicGen
 
 [servicos]
 # llm_url      = "http://localhost:11434"   # Ollama

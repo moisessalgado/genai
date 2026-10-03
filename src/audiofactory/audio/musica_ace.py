@@ -23,6 +23,7 @@ from pathlib import Path
 import numpy as np
 
 from ..config import settings
+from ..servicos import invokeai
 from .musica import SAMPLE_RATE, _ffmpeg
 
 VENV = settings().venv_musica
@@ -210,8 +211,8 @@ def gerar_pecas(paleta: str = "contemplativo", n: int = N_PECAS,
     if not disponivel():
         raise RuntimeError(
             f"venv de musica ausente em {VENV} — rode `uv venv --python 3.12 "
-            f".venv-musica && uv pip install --python .venv-musica/bin/python "
-            f"git+https://github.com/ace-step/ACE-Step.git`")
+            f"{VENV} && uv pip install --python {VENV}/bin/python "
+            f"-r envs/musica-ace.txt` (ou ajuste `[venvs] musica` no vf.toml)")
     CACHE.mkdir(parents=True, exist_ok=True)
     ACERVO.mkdir(parents=True, exist_ok=True)
     ps = prompts(paleta)
@@ -255,6 +256,8 @@ def _rodar(pecas: list[dict], peca_s: float) -> None:
               "guidance": GUIDANCE, "checkpoint": str(CHECKPOINT),
               "hf_home": str(settings().hf_home)}
     runner = Path(__file__).with_name("_ace_runner.py")
+    # O InvokeAI segura a VRAM entre geracoes; o runner precisa dela inteira.
+    invokeai.liberar_vram_se_no_ar()
     r = subprocess.run([str(VENV / "bin" / "python"), str(runner), json.dumps(pedido)],
                        capture_output=True, text=True)
     if r.returncode != 0:

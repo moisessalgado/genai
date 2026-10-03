@@ -22,9 +22,9 @@ def test_padroes_reproduzem_o_layout_de_sempre(tmp_path):
     r = config.RAIZ_PADRAO
     assert s.raiz == r
     assert s.projects_dir == r / "projects"
-    assert s.hf_home == r / "models"
-    assert s.ace_checkpoint == r / "models" / "ace-step"
-    assert s.venv_musica == r / ".venv-musica"
+    assert s.hf_home == Path("~/ai/hf").expanduser()
+    assert s.ace_checkpoint == Path("~/ai/hf/ace-step").expanduser()
+    assert s.venv_musica == Path("~/ai/envs/musica-ace").expanduser()
     assert s.llm_url == "http://localhost:11434"
     assert s.llm_modelo == "gemma4:12b"
     assert set(s.origem.values()) == {"padrão"}
@@ -57,11 +57,11 @@ def test_variavel_vf_vence_o_arquivo(tmp_path):
     assert s.hf_home == Path("/x")
 
 
-def test_vf_raiz_move_os_padroes_relativos(tmp_path):
+def test_vf_raiz_move_os_padroes_relativos_mas_nao_os_absolutos(tmp_path):
     s = config.carregar(env={"VF_RAIZ": str(tmp_path)})
     assert s.raiz == tmp_path
     assert s.projects_dir == tmp_path / "projects"
-    assert s.venv_musica == tmp_path / ".venv-musica"
+    assert s.venv_musica == Path("~/ai/envs/musica-ace").expanduser()
 
 
 def test_vf_raiz_le_o_vf_toml_da_nova_raiz(tmp_path):

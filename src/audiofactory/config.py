@@ -7,7 +7,8 @@ isoladas de música) é editar um arquivo, não o código.
 
 Precedência, do mais fraco ao mais forte:
 
-1. padrão no código (o comportamento de sempre: tudo dentro do repositório);
+1. padrão no código (dados dentro do repositório; pesos em `~/ai/hf` e venvs
+   isoladas em `~/ai/envs`, o layout do ai-stack);
 2. `HF_HOME` do ambiente, só para `hf_home` (é a variável da máquina inteira);
 3. o arquivo TOML: `$VF_CONFIG`, ou `vf.toml` na raiz (fora do git; ver
    `vf.example.toml`);
@@ -51,9 +52,11 @@ _PADROES: dict[str, str] = {
     "lexicon_dir": "lexicon",
     "books_dir": "books",
     "config_dir": "config",
-    "hf_home": "models",
-    "venv_musica": ".venv-musica",
-    "venv_musica_mg": ".venv-musica-mg",
+    "hf_home": "~/ai/hf",  # o HF_HOME unico da maquina (ai-stack)
+    # Venvs isoladas ficam no ~/ai/envs da maquina (layout do ai-stack); as
+    # listas congeladas para recria-las estao em envs/ neste repo.
+    "venv_musica": "~/ai/envs/musica-ace",
+    "venv_musica_mg": "~/ai/envs/musica-musicgen",
     "llm_url": "http://localhost:11434",
     "llm_modelo": "gemma4:12b",
     "invokeai_url": "http://127.0.0.1:9090",
