@@ -7,6 +7,7 @@ import typer
 import yaml
 from click.core import ParameterSource
 
+from ..audiolivro import projeto as livro
 from ..core import projeto as proj_mod
 from ..core.config import settings
 from ..core.estado import Store
@@ -160,7 +161,7 @@ def _um_sutta(entrada: str, ai, passos: tuple[str, ...], *, narrator: str,
     if not p.exists() or refazer:
         # Fora do `refazer`, um project.yaml existente é preservado: é onde o
         # operador escreve `cast:` e ajusta `params:` depois de ouvir.
-        p = proj_mod.criar(s.slug, fonte, narrator, titulo=s.titulo,
+        p = livro.criar(s.slug, fonte, narrator, titulo=s.titulo,
                            rights=s.rights(), extras={"fonte_url": s.url})
         console.print(f"[green]projeto[/] {p}")
     else:
@@ -338,7 +339,7 @@ def _um_capitulo(entrada: str, wk, passos: tuple[str, ...], *, narrator: str,
     p = proj_mod.dir_projeto(c.slug)
     if not p.exists() or refazer:
         cast = _cast_do_elenco(elenco) if elenco else {}
-        p = proj_mod.criar(c.slug, fonte, narrator, titulo=c.titulo_video,
+        p = livro.criar(c.slug, fonte, narrator, titulo=c.titulo_video,
                            rights=c.rights(),
                            extras={"fonte_url": c.url, "cast": cast})
         console.print(f"[green]projeto[/] {p}")

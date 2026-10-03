@@ -8,6 +8,7 @@ import typer
 import yaml
 from rich.table import Table
 
+from ..audiolivro import projeto as livro
 from ..core import projeto as proj_mod
 from ..core.config import settings
 from ..core.servicos import invokeai
@@ -31,7 +32,7 @@ def _lexicon() -> dict[str, str]:
 def new(slug: str, fonte: Path = typer.Option(..., "--from"),
         narrator: str = "default", titulo: str = typer.Option(None)):
     """Cria um projeto a partir de um arquivo de texto."""
-    p = proj_mod.criar(slug, fonte.resolve(), narrator, titulo=titulo)
+    p = livro.criar(slug, fonte.resolve(), narrator, titulo=titulo)
     console.print(f"[green]projeto criado[/] {p}")
     console.print("[dim]opcional: preencha `rights:` em project.yaml para registrar "
                   "a procedência do texto[/]")
@@ -50,8 +51,8 @@ def _etapa_script(p: Path, max_chars: int = 300, llm: bool = False,
                   modelo: str | None = None,
                   capitulos: list[tuple[str, str]] | None = None,
                   elenco: dict[str, str] | None = None) -> None:
-    proj_mod.ingerir(p)
-    s = proj_mod.montar_script(p, _lexicon(), max_chars, usar_llm=llm, modelo_llm=modelo,
+    livro.ingerir(p)
+    s = livro.montar_script(p, _lexicon(), max_chars, usar_llm=llm, modelo_llm=modelo,
                                capitulos=capitulos, elenco=elenco)
     n_seg = sum(len(c.segments) for c in s.chapters)
     console.print(f"[green]script.json[/] {len(s.chapters)} capítulos, {n_seg} segmentos, "
@@ -75,7 +76,7 @@ def lexico_antigo(slug: str,
     p = _proj(slug)
     caminho_texto = p / "clean.txt"
     if not caminho_texto.exists():
-        proj_mod.ingerir(p)
+        livro.ingerir(p)
     from ..audiolivro.narration import ortografia
 
     destino = saida or (settings().lexicon_dir / "pt-BR.ortografia-1943.yaml")
