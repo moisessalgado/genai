@@ -12,17 +12,16 @@ melhor entre candidatos da mesma janela).
 """
 from __future__ import annotations
 
-import json
 import re
 from dataclasses import dataclass
 from pathlib import Path
-from urllib import error, request
+from urllib import error
 
 from . import imagem as imagem_mod
 from . import imagem_qa
 from . import slides as slides_mod
 from ..core.config import settings
-from ..audiolivro.narration.llm import OLLAMA_URL
+from ..core.llm import gerar as gerar_llm
 
 MODELO_OLLAMA = settings().llm_modelo
 
@@ -198,17 +197,11 @@ def janelas_do_srt(srt_path: Path, janela_s: float = JANELA_S) -> list[Janela]:
 
 
 def _perguntar_ollama(texto: str, modelo: str, timeout: int, num_predict: int) -> str:
-    corpo = json.dumps({
-        "model": modelo,
-        "prompt": PROMPT_CENA.format(contexto=CONTEXTO_LIVRO, texto=texto[:600],
-                                     ficha_menina=FICHA_MENINA,
-                                     ficha_boneca=FICHA_BONECA),
-        "stream": False,
-        "options": {"temperature": 0.4, "num_predict": num_predict},
-    }).encode()
-    req = request.Request(OLLAMA_URL, data=corpo, headers={"Content-Type": "application/json"})
-    with request.urlopen(req, timeout=timeout) as r:
-        return json.loads(r.read())["response"].strip()
+    return gerar_llm(PROMPT_CENA.format(contexto=CONTEXTO_LIVRO, texto=texto[:600],
+                                        ficha_menina=FICHA_MENINA,
+                                        ficha_boneca=FICHA_BONECA),
+                     modelo=modelo, temperatura=0.4, num_predict=num_predict,
+                     timeout=timeout)
 
 
 def _validar_prompt(saida: str) -> bool:

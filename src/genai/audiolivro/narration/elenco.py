@@ -16,14 +16,13 @@ não uma tentativa de resolver o problema inteiro.
 """
 from __future__ import annotations
 
-import json
-import re
 import unicodedata
-from urllib import error, request
+from urllib import error
 
 from ...core.config import settings
+from ...core.llm import URL_GENERATE, gerar as gerar_llm
 
-OLLAMA_URL = settings().llm_url.rstrip("/") + "/api/generate"
+OLLAMA_URL = URL_GENERATE
 MODELO_PADRAO = settings().llm_modelo
 
 INDETERMINADO = "indeterminado"
@@ -56,17 +55,11 @@ def _sem_acento(s: str) -> str:
 
 def _perguntar(fala: str, antes: str, depois: str, personagens: list[str],
               modelo: str, url: str, timeout: int) -> str:
-    corpo = json.dumps({
-        "model": modelo,
-        "prompt": PROMPT.format(personagens=", ".join(personagens),
-                                fala=fala, antes=antes[-JANELA_CONTEXTO:],
-                                depois=depois[:JANELA_CONTEXTO]),
-        "stream": False,
-        "options": {"temperature": 0.0, "num_predict": 700},
-    }).encode()
-    req = request.Request(url, data=corpo, headers={"Content-Type": "application/json"})
-    with request.urlopen(req, timeout=timeout) as r:
-        return json.loads(r.read())["response"].strip()
+    return gerar_llm(PROMPT.format(personagens=", ".join(personagens),
+                                   fala=fala, antes=antes[-JANELA_CONTEXTO:],
+                                   depois=depois[:JANELA_CONTEXTO]),
+                     modelo=modelo, temperatura=0.0, num_predict=700,
+                     timeout=timeout, url=url)
 
 
 def atribuir(fala: str, antes: str, depois: str, personagens: list[str], *,

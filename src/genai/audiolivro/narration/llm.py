@@ -10,17 +10,17 @@ O objetivo nao e fluidez, e fidelidade. Na duvida, o texto original vence.
 """
 from __future__ import annotations
 
-import json
 import re
 import unicodedata
 from dataclasses import dataclass
-from urllib import error, request
+from urllib import error
 
 from num2words import num2words
 
 from ...core.config import settings
+from ...core.llm import URL_GENERATE, gerar as gerar_llm
 
-OLLAMA_URL = settings().llm_url.rstrip("/") + "/api/generate"
+OLLAMA_URL = URL_GENERATE
 MODELO_PADRAO = settings().llm_modelo
 
 PROMPT = """Você prepara texto para narração em português brasileiro.
@@ -117,18 +117,12 @@ def fallback_romano(span: str) -> str | None:
 
 def perguntar(span: str, antes: str, depois: str, modelo: str = MODELO_PADRAO,
               url: str = OLLAMA_URL, timeout: int = 60, num_predict: int = 600) -> str:
-    corpo = json.dumps({
-        "model": modelo,
-        "prompt": PROMPT.format(span=span, antes=antes[-160:], depois=depois[:160]),
-        "stream": False,
-        # gemma4:12b consome ~230 tokens de raciocinio interno antes de emitir a
-        # resposta: com num_predict baixo ele para por 'length' e devolve string
-        # vazia. 600 e folgado o bastante para a resposta sair.
-        "options": {"temperature": 0.0, "num_predict": num_predict},
-    }).encode()
-    req = request.Request(url, data=corpo, headers={"Content-Type": "application/json"})
-    with request.urlopen(req, timeout=timeout) as r:
-        return json.loads(r.read())["response"].strip()
+    # gemma4:12b consome ~230 tokens de raciocinio interno antes de emitir a
+    # resposta: com num_predict baixo ele para por 'length' e devolve string
+    # vazia. 600 e folgado o bastante para a resposta sair.
+    return gerar_llm(PROMPT.format(span=span, antes=antes[-160:], depois=depois[:160]),
+                     modelo=modelo, temperatura=0.0, num_predict=num_predict,
+                     timeout=timeout, url=url)
 
 
 def resolver(texto: str, ambiguos, modelo: str = MODELO_PADRAO,

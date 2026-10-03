@@ -28,11 +28,12 @@ import difflib
 import json
 import re
 import unicodedata
-from urllib import error, request
+from urllib import error
 
 from ...core.config import settings
+from ...core.llm import URL_GENERATE, gerar as gerar_llm
 
-OLLAMA_URL = settings().llm_url.rstrip("/") + "/api/generate"
+OLLAMA_URL = URL_GENERATE
 MODELO_PADRAO = settings().llm_modelo
 
 PROMPT = """Você conhece a Reforma Ortográfica de 1943 do português do Brasil.
@@ -128,18 +129,11 @@ def validar(antiga: str, moderna: str) -> tuple[bool, str]:
 
 
 def _chamar_ollama(prompt: str, modelo: str, url: str, timeout: int, num_predict: int) -> str:
-    corpo = json.dumps({
-        "model": modelo,
-        "prompt": prompt,
-        "stream": False,
-        # gemma4:12b consome ~230 tokens de raciocinio interno antes de emitir a
-        # resposta (mesma observacao de narration/llm.py): com num_predict baixo
-        # ele para por 'length' e devolve string vazia.
-        "options": {"temperature": 0.0, "num_predict": num_predict},
-    }).encode()
-    req = request.Request(url, data=corpo, headers={"Content-Type": "application/json"})
-    with request.urlopen(req, timeout=timeout) as r:
-        return json.loads(r.read())["response"].strip()
+    # gemma4:12b consome ~230 tokens de raciocinio interno antes de emitir a
+    # resposta (mesma observacao de narration/llm.py): com num_predict baixo
+    # ele para por 'length' e devolve string vazia.
+    return gerar_llm(prompt, modelo=modelo, temperatura=0.0, num_predict=num_predict,
+                     timeout=timeout, url=url)
 
 
 def _perguntar(palavra: str, contexto: str, modelo: str, url: str, timeout: int,
