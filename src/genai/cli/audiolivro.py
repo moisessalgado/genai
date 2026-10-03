@@ -11,10 +11,10 @@ from rich.table import Table
 from ..core import projeto as proj_mod
 from ..core.config import settings
 from ..core.servicos import invokeai
-from ..engines.chatterbox_engine import ChatterboxEngine
-from ..pipeline import Runner
-from ..qa.verify import Verifier
-from ..script.models import Script
+from ..audiolivro.engines.chatterbox_engine import ChatterboxEngine
+from ..audiolivro.pipeline import Runner
+from ..audiolivro.qa.verify import Verifier
+from ..audiolivro.script.models import Script
 from ..core.estado import Store
 from ._comum import _proj, console
 from .app import app
@@ -76,7 +76,7 @@ def lexico_antigo(slug: str,
     caminho_texto = p / "clean.txt"
     if not caminho_texto.exists():
         proj_mod.ingerir(p)
-    from ..narration import ortografia
+    from ..audiolivro.narration import ortografia
 
     destino = saida or (settings().lexicon_dir / "pt-BR.ortografia-1943.yaml")
     existente: dict[str, str] = {}
@@ -128,7 +128,7 @@ def _etapa_run(p: Path, *, chapters: str | None = None, no_qa: bool = False,
                voice: Path | None = None, ptbr_pack: bool = True,
                workers: int = 1, free_ollama: bool = False) -> None:
     s = Script.load(p / "script.json")
-    from ..voices import carregar
+    from ..audiolivro.voices import carregar
 
     def _ref(vid: str) -> Path | None:
         if vid in ("default", None):
@@ -257,7 +257,7 @@ def export(slug: str, formato: str = typer.Option("mp3", help="mp3, aac, flac, w
 
 def _etapa_export(p: Path, *, formato: str = "mp3", juntar: bool = True,
                   bitrate: str = "192k") -> None:
-    from ..audio.process import chapters_txt, concatenar, duracao, exportar, masterizar
+    from ..audiolivro.audio.process import chapters_txt, concatenar, duracao, exportar, masterizar
 
     cfg = proj_mod.carregar_config(p)
     s = Script.load(p / "script.json")
@@ -307,7 +307,7 @@ def _etapa_export(p: Path, *, formato: str = "mp3", juntar: bool = True,
 def report(slug: str, medir: bool = typer.Option(True, "--medir/--sem-medir",
                                                  help="medir loudness dos masters (usa ffmpeg)")):
     """Confronta as métricas do projeto com os alvos objetivos do TDD."""
-    from ..qa.report import coletar, markdown
+    from ..audiolivro.qa.report import coletar, markdown
 
     p = _proj(slug)
     cfg = proj_mod.carregar_config(p)

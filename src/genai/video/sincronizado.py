@@ -22,7 +22,7 @@ from . import imagem as imagem_mod
 from . import imagem_qa
 from . import slides as slides_mod
 from ..core.config import settings
-from ..narration.llm import OLLAMA_URL
+from ..audiolivro.narration.llm import OLLAMA_URL
 
 MODELO_OLLAMA = settings().llm_modelo
 

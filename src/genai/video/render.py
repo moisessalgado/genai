@@ -14,7 +14,7 @@ import subprocess
 import tempfile
 from pathlib import Path
 
-from ..audio.process import duracao
+from ..audiolivro.audio.process import duracao
 from . import slides as slides_mod
 from . import sincronizado as sincronizado_mod
 

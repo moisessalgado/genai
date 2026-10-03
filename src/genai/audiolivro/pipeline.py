@@ -25,14 +25,14 @@ from .engines.base import TTSEngine
 from .qa.policy import Decisao, Tentativa, deve_repetir, escolher
 from .qa.verify import Verifier
 from .script.models import Script
-from .core.estado import Store
+from ..core.estado import Store
 
 
 def _lexicon_do_projeto() -> dict[str, str]:
     """Mesmos arquivos de lexico que o `script` usou para respelar."""
     import yaml
 
-    from .core.config import settings
+    from ..core.config import settings
 
     lex: dict[str, str] = {}
     for f in sorted(settings().lexicon_dir.glob("*.yaml")):
@@ -248,7 +248,7 @@ class Runner:
         # A legenda sai junto com o audio, do MESMO ato de montagem: e a unica
         # forma de os tempos serem os reais. Gerada depois, por outro caminho,
         # ela descolaria da fala.
-        from .video.legenda import desfazer_lexico, escrever_srt
+        from ..video.legenda import desfazer_lexico, escrever_srt
         # O `text` e o respelling fonetico ("dama tchaca pavátana súta"), que
         # existe para o motor pronunciar e nunca deve ser lido por gente. Mas o
         # `source` tambem nao serve: ele guarda o PARAGRAFO inteiro, repetido em

@@ -9,7 +9,7 @@ import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
-from genai.audio.process import chapters_txt
+from genai.audiolivro.audio.process import chapters_txt
 from genai.core.ingest.loader import (
     _bordas_repetidas,
     _unir_linhas,
@@ -17,11 +17,11 @@ from genai.core.ingest.loader import (
     limpar,
     ler,
 )
-from genai.pipeline import _repartir
-from genai.qa.policy import Tentativa, escolher, deve_repetir
+from genai.audiolivro.pipeline import _repartir
+from genai.audiolivro.qa.policy import Tentativa, escolher, deve_repetir
 
 
-from genai.qa.verify import QAResult
+from genai.audiolivro.qa.verify import QAResult
 
 
 AUDIO = np.zeros(2400, dtype=np.float32)

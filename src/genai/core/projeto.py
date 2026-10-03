@@ -6,11 +6,11 @@ from pathlib import Path
 import yaml
 
 from .config import settings
-from ..chunk.splitter import split_paragraph
+from ..audiolivro.chunk.splitter import split_paragraph
 from .ingest.loader import detectar_capitulos, limpar, ler, paragrafos
-from ..text.roles import dividir_por_papel, tem_dialogo
-from ..narration.rules import detect_ambiguous, normalize
-from ..script.models import Chapter, Rights, Script, Segment, SynthParams
+from ..audiolivro.text.roles import dividir_por_papel, tem_dialogo
+from ..audiolivro.narration.rules import detect_ambiguous, normalize
+from ..audiolivro.script.models import Chapter, Rights, Script, Segment, SynthParams
 
 # Alias de compatibilidade: o lugar certo agora e `config.settings()`.
 RAIZ = settings().raiz
@@ -125,13 +125,13 @@ def montar_script(proj: Path, lexicon: dict[str, str] | None = None,
         for par in paragrafos(corpo):
             partes = dividir_por_papel(par)
             if elenco:
-                from ..narration.elenco import aplicar_elenco
+                from ..audiolivro.narration.elenco import aplicar_elenco
 
                 partes = aplicar_elenco(partes, elenco, cache=elenco_cache)
                 personagens_atribuidos += sum(1 for p, _ in partes if p.startswith("personagem_"))
             for papel, fonte in partes:
                 if usar_llm:
-                    from ..narration.llm import resolver
+                    from ..audiolivro.narration.llm import resolver
 
                     amb = detect_ambiguous(fonte)
                     ambiguos += len(amb)

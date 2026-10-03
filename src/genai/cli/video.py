@@ -113,7 +113,7 @@ def _etapa_video(p: Path, cfg: dict, *, preset: str = "slides",
     from ..video import musica_ace as ace
     from ..video import musica_musicgen as mg
     from ..video.musica import TRILHA_LUFS, mixar, preparar_trilha
-    from ..audio.process import duracao
+    from ..audiolivro.audio.process import duracao
     from ..video import slides as slides_mod
     from ..video import sincronizado as sincronizado_mod
     from ..video.render import presets, renderizar

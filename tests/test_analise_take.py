@@ -9,7 +9,7 @@ import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
-from genai.audio.analise import CORTE_MIN_HZ, analisar_audio, corte_espectral
+from genai.audiolivro.audio.analise import CORTE_MIN_HZ, analisar_audio, corte_espectral
 
 SR = 48000
 
@@ -109,7 +109,7 @@ def _gravar(tmp_path, nome, audio, sr=SR):
 
 def test_registry_recusa_microfone_bluetooth(tmp_path):
     """O gate que importa: banda cortada não se conserta depois do registro."""
-    from genai.voices import criar
+    from genai.audiolivro.voices import criar
 
     ref = _gravar(tmp_path, "bt.wav", fala_sintetica(30, pico=0.5, corte_hz=8000))
     with pytest.raises(ValueError, match="banda cortada"):
@@ -117,7 +117,7 @@ def test_registry_recusa_microfone_bluetooth(tmp_path):
 
 
 def test_registry_recusa_sala_barulhenta(tmp_path):
-    from genai.voices import criar
+    from genai.audiolivro.voices import criar
 
     ref = _gravar(tmp_path, "ruido.wav", fala_sintetica(30, pico=0.5, ruido=0.02))
     with pytest.raises(ValueError, match="ruído de fundo|sinal/ruído"):
@@ -125,7 +125,7 @@ def test_registry_recusa_sala_barulhenta(tmp_path):
 
 
 def test_registry_aceita_take_bom(tmp_path):
-    from genai.voices import criar
+    from genai.audiolivro.voices import criar
 
     ref = _gravar(tmp_path, "bom.wav", fala_sintetica(30, pico=0.5))
     v = criar(tmp_path / "raiz", "moises-v1", ref, consentimento="ok")
@@ -135,7 +135,7 @@ def test_registry_aceita_take_bom(tmp_path):
 
 def test_voz_template_nao_passa_pelo_gate_de_microfone(tmp_path):
     """Template vem de TTS a 24 kHz: medir microfone e sala não faz sentido."""
-    from genai.voices import criar
+    from genai.audiolivro.voices import criar
 
     ref = _gravar(tmp_path, "kokoro.wav",
                   fala_sintetica(16, sr=24000, pico=0.5), sr=24000)
@@ -183,7 +183,7 @@ def test_offset_dc_nao_e_confundido_com_mudo():
 @pytest.mark.parametrize("modulacao,esperado", [(3.7, True), (6.1, False)])
 def test_limiar_fica_entre_o_caso_real_e_a_fala_real(modulacao, esperado):
     """3,7 foi o microfone mudo medido; 6,1 foi o pior chunk de fala narrada real."""
-    from genai.audio.analise import MODULACAO_MIN_DB
+    from genai.audiolivro.audio.analise import MODULACAO_MIN_DB
 
     assert (modulacao < MODULACAO_MIN_DB) is esperado
 

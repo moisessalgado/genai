@@ -7,7 +7,7 @@ import typer
 from rich.table import Table
 
 from ..core.config import settings
-from ..engines.chatterbox_engine import ChatterboxEngine
+from ..audiolivro.engines.chatterbox_engine import ChatterboxEngine
 from ._comum import console
 from .app import app
 
@@ -51,7 +51,7 @@ def _dispositivos_captura() -> list[tuple[str, str, str]]:
 def _mostrar_take(take, titulo: str) -> bool:
     """Imprime a análise e devolve True se a gravação serve como referência."""
     t = Table("medida", "valor", "alvo", title=titulo)
-    from ..audio.analise import CORTE_MIN_HZ, PICO_ALVO_DB, RUIDO_MAX_DB, SNR_MIN_DB
+    from ..audiolivro.audio.analise import CORTE_MIN_HZ, PICO_ALVO_DB, RUIDO_MAX_DB, SNR_MIN_DB
     t.add_row("duração", f"{take.duracao_s:.1f} s", "20–180 s")
     t.add_row("taxa/canais", f"{take.sample_rate} Hz · {take.canais}", "48000 Hz · 1")
     t.add_row("pico", f"{take.pico_db:.1f} dBFS", f"{PICO_ALVO_DB:.0f} dBFS")
@@ -59,7 +59,7 @@ def _mostrar_take(take, titulo: str) -> bool:
     t.add_row("sinal/ruído", f"{take.snr_db:.1f} dB", f"> {SNR_MIN_DB:.0f} dB")
     t.add_row("banda útil", f"{take.corte_hz/1000:.1f} kHz", f"> {CORTE_MIN_HZ/1000:.0f} kHz")
     t.add_row("clipping", f"{take.clip_fracao*100:.3f}%", "0%")
-    from ..audio.analise import MODULACAO_MIN_DB, RUMBLE_MAX_FRACAO
+    from ..audiolivro.audio.analise import MODULACAO_MIN_DB, RUMBLE_MAX_FRACAO
     t.add_row("modulação (voz?)", f"{take.modulacao_db:.1f} dB",
               f"> {MODULACAO_MIN_DB:.0f} dB")
     t.add_row("energia < 20 Hz", f"{take.rumble_fracao*100:.1f}%",
@@ -79,7 +79,7 @@ def _mostrar_take(take, titulo: str) -> bool:
 @voice_app.command("check")
 def voice_check(arquivo: Path):
     """Mede uma gravação e diz se ela serve como referência."""
-    from ..audio.analise import analisar
+    from ..audiolivro.audio.analise import analisar
 
     if not _mostrar_take(analisar(arquivo), f"Análise — {arquivo.name}"):
         raise typer.Exit(1)
@@ -94,7 +94,7 @@ def voice_record(
     """Instruções, texto de calibração e — com --saida — a gravação em si."""
     import subprocess
 
-    from ..voices import TEXTO_CALIBRACAO
+    from ..audiolivro.voices import TEXTO_CALIBRACAO
 
     entradas = _dispositivos_captura()
     if listar:
@@ -152,7 +152,7 @@ def voice_record(
         console.print(f"[red]falha na gravação:[/] {proc.stderr.strip()[:300]}")
         raise typer.Exit(1)
 
-    from ..audio.analise import CORTE_SUBSONICO_HZ, RUMBLE_MAX_FRACAO, analisar
+    from ..audiolivro.audio.analise import CORTE_SUBSONICO_HZ, RUMBLE_MAX_FRACAO, analisar
 
     # O subsônico é medido no sinal CRU e depois removido. Medido nesta máquina:
     # a captura do ALC897 tem deriva lenta abaixo de 20 Hz mesmo sem nada plugado,
@@ -184,7 +184,7 @@ def voice_new(voice_id: str, reference: Path = typer.Option(..., "--reference"),
               forcar: bool = typer.Option(False, "--forcar",
                   help="registra apesar dos defeitos medidos, que ficam no profile.yaml")):
     """Registra uma voz. Exige consentimento documentado."""
-    from ..voices import criar, modelo_consentimento
+    from ..audiolivro.voices import criar, modelo_consentimento
 
     try:
         v = criar(settings().raiz, voice_id, reference.resolve(),
@@ -228,7 +228,7 @@ def voice_template(voice_id: str = typer.Argument(..., help="id a registrar, ex.
     warnings.filterwarnings("ignore")
     from kokoro import KPipeline
 
-    from ..voices import TEXTO_CALIBRACAO, criar
+    from ..audiolivro.voices import TEXTO_CALIBRACAO, criar
 
     with console.status(f"sintetizando referência com {kokoro_voice}…"):
         pipe = KPipeline(lang_code="p")
@@ -249,7 +249,7 @@ def voice_template(voice_id: str = typer.Argument(..., help="id a registrar, ex.
 @voice_app.command("list")
 def voice_list():
     """Lista as vozes registradas."""
-    from ..voices import listar, raiz_vozes
+    from ..audiolivro.voices import listar, raiz_vozes
 
     vozes = listar(settings().raiz)
     if not vozes:
@@ -270,7 +270,7 @@ def voice_test(voice_id: str, ptbr_pack: bool = True):
     """Sintetiza o texto de calibração com a voz, para conferência auditiva."""
     import soundfile as sf
 
-    from ..voices import TEXTO_CALIBRACAO, carregar
+    from ..audiolivro.voices import TEXTO_CALIBRACAO, carregar
 
     v = carregar(settings().raiz, voice_id)
     engine = ChatterboxEngine(v.params, use_ptbr_pack=ptbr_pack)

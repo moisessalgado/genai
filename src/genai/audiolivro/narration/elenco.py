@@ -21,7 +21,7 @@ import re
 import unicodedata
 from urllib import error, request
 
-from ..core.config import settings
+from ...core.config import settings
 
 OLLAMA_URL = settings().llm_url.rstrip("/") + "/api/generate"
 MODELO_PADRAO = settings().llm_modelo
