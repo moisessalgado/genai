@@ -80,6 +80,26 @@ FUNDO_B = "0x1b263b"
 COR_ONDA = "0x7ec8e3"
 
 
+def compensar_cruzamento(duracoes: list[float], cruzamento: float) -> list[float]:
+    """Durações por imagem para que cada troca COMECE no instante pedido.
+
+    O `xfade` sobrepõe as duas imagens durante o `cruzamento`, então o vídeo
+    encolhe `cruzamento` a cada troca e as imagens adiantam em relação ao áudio
+    (no preset `sincronizado`, até 2 s por imagem). Somando o `cruzamento` a
+    cada imagem que é seguida de um dissolve, a troca k começa exatamente na
+    soma das k primeiras durações pedidas.
+
+    Acima de `LOTE_MAXIMO` imagens o render corta em lotes, e a última imagem de
+    cada lote não tem dissolve depois (a emenda é por concatenação) — essa não
+    ganha a compensação."""
+    out = list(duracoes)
+    em_lotes = len(out) > LOTE_MAXIMO
+    for i in range(len(out) - 1):
+        if not (em_lotes and (i + 1) % LOTE_MAXIMO == 0):
+            out[i] += cruzamento
+    return out
+
+
 def presets() -> list[str]:
     return ["slides", "sincronizado", "ondas", "espectro", "estatico", "gradiente"]
 
